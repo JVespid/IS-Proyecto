@@ -1,5 +1,5 @@
 {
-  "name": "my-app",
+  "name": "sistema-pase-lista-qr",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -9,9 +9,22 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@supabase/auth-helpers-nextjs": "^0.8.7",
+    "@supabase/ssr": "^0.8.0",
+    "@supabase/supabase-js": "^2.39.0",
+    "@zxing/library": "^0.20.0",
+    "axios": "^1.6.5",
+    "cheerio": "^1.0.0-rc.12",
+    "crypto-js": "^4.2.0",
+    "date-fns": "^3.3.1",
+    "html5-qrcode": "^2.3.8",
     "next": "16.1.6",
+    "qrcode": "^1.5.3",
     "react": "19.2.3",
-    "react-dom": "19.2.3"
+    "react-dom": "19.2.3",
+    "react-hot-toast": "^2.4.1",
+    "uuid": "^9.0.1",
+    "zod": "^3.22.4"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
