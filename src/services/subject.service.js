@@ -12,31 +12,45 @@ const TABLE_NAME = 'Subject';
 const SCHEMA = 'bdLista';
 
 /**
- * Obtiene todas las materias de un profesor
+ * Obtiene todas las materias usadas por un profesor en sus sesiones
+ * NOTA: Ahora las materias son genéricas. Este método obtiene las materias
+ * que el profesor ha usado en sus sesiones (CurrentGroup).
  * @param {string} professorId - ID del profesor
  * @param {SupabaseClient} client - Cliente de Supabase (opcional)
- * @returns {Promise<Array>} Lista de materias
+ * @returns {Promise<Array>} Lista de materias únicas usadas por el profesor
  */
 export const getByProfessorId = async (professorId, client = supabase) => {
   try {
-    log(MODULE_NAME, 'Obteniendo materias del profesor', { professorId });
+    log(MODULE_NAME, 'Obteniendo materias usadas por profesor', { professorId });
 
+    // Nueva lógica: obtener materias desde CurrentGroup donde professorId coincide
     const { data, error } = await client
       .schema(SCHEMA)
-      .from(TABLE_NAME)
-      .select('*')
-      .eq('professorId', professorId)
-      .order('created_at', { ascending: false });
+      .from('CurrentGroup')
+      .select('subjectId, Subject (*)')
+      .eq('professorId', professorId);
 
     if (error) {
       throw error;
     }
 
+    // Extraer y deduplicar materias
+    const uniqueSubjects = [];
+    const seenIds = new Set();
+    
+    data.forEach(item => {
+      if (item.Subject && !seenIds.has(item.Subject.id)) {
+        seenIds.add(item.Subject.id);
+        uniqueSubjects.push(item.Subject);
+      }
+    });
+
     log(MODULE_NAME, 'Materias obtenidas', {
       professorId,
-      count: data.length,
+      count: uniqueSubjects.length,
     });
-    return data;
+    
+    return uniqueSubjects;
   } catch (error) {
     logError(MODULE_NAME, 'Error al obtener materias del profesor', error);
     throw error;
@@ -77,7 +91,36 @@ export const getById = async (id, client = supabase) => {
 };
 
 /**
+ * Obtiene todas las materias disponibles
+ * NOTA: Las materias ahora son genéricas y pueden ser usadas por cualquier profesor
+ * @param {SupabaseClient} client - Cliente de Supabase (opcional)
+ * @returns {Promise<Array>} Lista de todas las materias
+ */
+export const getAll = async (client = supabase) => {
+  try {
+    log(MODULE_NAME, 'Obteniendo todas las materias');
+
+    const { data, error } = await client
+      .schema(SCHEMA)
+      .from(TABLE_NAME)
+      .select('*')
+      .order('Subject', { ascending: true });
+
+    if (error) {
+      throw error;
+    }
+
+    log(MODULE_NAME, 'Materias obtenidas', { count: data.length });
+    return data;
+  } catch (error) {
+    logError(MODULE_NAME, 'Error al obtener todas las materias', error);
+    throw error;
+  }
+};
+
+/**
  * Crea una nueva materia
+ * NOTA: Las materias ahora son genéricas (sin vínculo a profesor específico)
  * @param {object} subjectData - Datos de la materia
  * @param {SupabaseClient} client - Cliente de Supabase (opcional)
  * @returns {Promise<object>} Materia creada
@@ -89,7 +132,6 @@ export const create = async (subjectData, client = supabase) => {
 
     log(MODULE_NAME, 'Creando materia', {
       subject: validatedData.Subject,
-      professorId: validatedData.professorId,
     });
 
     const { data, error } = await client
@@ -97,7 +139,6 @@ export const create = async (subjectData, client = supabase) => {
       .from(TABLE_NAME)
       .insert([
         {
-          professorId: validatedData.professorId,
           Subject: validatedData.Subject,
         },
       ])

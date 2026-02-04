@@ -13,7 +13,22 @@ export default function Button({
   loading = false,
   className = '',
   type = 'button',
+  unstyled = false, // Nueva prop para desactivar estilos predeterminados
 }) {
+  // Si unstyled es true, solo aplicar clases personalizadas
+  if (unstyled) {
+    return (
+      <button
+        type={type}
+        onClick={onClick}
+        disabled={disabled || loading}
+        className={className}
+      >
+        {loading ? 'Cargando...' : children}
+      </button>
+    );
+  }
+
   const baseStyles = 'px-4 py-2 rounded font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed';
   
   const variants = {

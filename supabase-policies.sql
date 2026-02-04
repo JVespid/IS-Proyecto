@@ -95,42 +95,38 @@ WITH CHECK (true);
 DROP POLICY IF EXISTS "subjects_select_own" ON "bdLista"."Subject";
 DROP POLICY IF EXISTS "subjects_insert_own" ON "bdLista"."Subject";
 DROP POLICY IF EXISTS "subjects_update_own" ON "bdLista"."Subject";
+DROP POLICY IF EXISTS "subjects_select_public" ON "bdLista"."Subject";
+DROP POLICY IF EXISTS "subjects_insert_authenticated" ON "bdLista"."Subject";
+DROP POLICY IF EXISTS "subjects_update_authenticated" ON "bdLista"."Subject";
+DROP POLICY IF EXISTS "subjects_delete_authenticated" ON "bdLista"."Subject";
 
--- Los profesores pueden ver solo sus propias materias
-CREATE POLICY "subjects_select_own" 
+-- Cualquiera puede ver materias (son genéricas y compartidas)
+CREATE POLICY "subjects_select_public" 
 ON "bdLista"."Subject"
 FOR SELECT
-TO authenticated
-USING (
-  "professorId" IN (
-    SELECT id FROM "bdLista"."Professors" 
-    WHERE email = auth.jwt() ->> 'email'
-  )
-);
+TO public
+USING (true);
 
--- Los profesores pueden crear materias
-CREATE POLICY "subjects_insert_own" 
+-- Solo profesores autenticados pueden crear materias
+CREATE POLICY "subjects_insert_authenticated" 
 ON "bdLista"."Subject"
 FOR INSERT
 TO authenticated
-WITH CHECK (
-  "professorId" IN (
-    SELECT id FROM "bdLista"."Professors" 
-    WHERE email = auth.jwt() ->> 'email'
-  )
-);
+WITH CHECK (auth.role() = 'authenticated');
 
--- Los profesores pueden actualizar sus materias
-CREATE POLICY "subjects_update_own" 
+-- Solo profesores autenticados pueden actualizar materias
+CREATE POLICY "subjects_update_authenticated" 
 ON "bdLista"."Subject"
 FOR UPDATE
 TO authenticated
-USING (
-  "professorId" IN (
-    SELECT id FROM "bdLista"."Professors" 
-    WHERE email = auth.jwt() ->> 'email'
-  )
-);
+USING (auth.role() = 'authenticated');
+
+-- Solo profesores autenticados pueden eliminar materias
+CREATE POLICY "subjects_delete_authenticated" 
+ON "bdLista"."Subject"
+FOR DELETE
+TO authenticated
+USING (auth.role() = 'authenticated');
 ```
 
 ---
@@ -181,27 +177,21 @@ ON "bdLista"."CurrentGroup"
 FOR SELECT
 TO authenticated
 USING (
-  "subjectId" IN (
-    SELECT id FROM "bdLista"."Subject" 
-    WHERE "professorId" IN (
-      SELECT id FROM "bdLista"."Professors" 
-      WHERE email = auth.jwt() ->> 'email'
-    )
+  "professorId" IN (
+    SELECT id FROM "bdLista"."Professors" 
+    WHERE email = auth.jwt() ->> 'email'
   )
 );
 
--- Los profesores pueden crear sesiones para sus materias
+-- Los profesores pueden crear sesiones (el professorId debe coincidir con el usuario autenticado)
 CREATE POLICY "current_group_insert_own" 
 ON "bdLista"."CurrentGroup"
 FOR INSERT
 TO authenticated
 WITH CHECK (
-  "subjectId" IN (
-    SELECT id FROM "bdLista"."Subject" 
-    WHERE "professorId" IN (
-      SELECT id FROM "bdLista"."Professors" 
-      WHERE email = auth.jwt() ->> 'email'
-    )
+  "professorId" IN (
+    SELECT id FROM "bdLista"."Professors" 
+    WHERE email = auth.jwt() ->> 'email'
   )
 );
 
@@ -211,12 +201,9 @@ ON "bdLista"."CurrentGroup"
 FOR UPDATE
 TO authenticated
 USING (
-  "subjectId" IN (
-    SELECT id FROM "bdLista"."Subject" 
-    WHERE "professorId" IN (
-      SELECT id FROM "bdLista"."Professors" 
-      WHERE email = auth.jwt() ->> 'email'
-    )
+  "professorId" IN (
+    SELECT id FROM "bdLista"."Professors" 
+    WHERE email = auth.jwt() ->> 'email'
   )
 );
 ```
@@ -246,12 +233,9 @@ TO authenticated
 USING (
   "currentGroupId" IN (
     SELECT id FROM "bdLista"."CurrentGroup" 
-    WHERE "subjectId" IN (
-      SELECT id FROM "bdLista"."Subject" 
-      WHERE "professorId" IN (
-        SELECT id FROM "bdLista"."Professors" 
-        WHERE email = auth.jwt() ->> 'email'
-      )
+    WHERE "professorId" IN (
+      SELECT id FROM "bdLista"."Professors" 
+      WHERE email = auth.jwt() ->> 'email'
     )
   )
 );

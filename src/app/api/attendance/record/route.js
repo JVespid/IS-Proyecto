@@ -26,6 +26,7 @@ export async function POST(request) {
     log(MODULE_NAME, 'Datos validados', {
       sessionId: validatedData.sessionId,
       reportCard: validatedData.studentData.reportCard,
+      numberOfList: validatedData.numberOfList,
     });
 
     // Verificar que la sesión esté activa
@@ -86,6 +87,7 @@ export async function POST(request) {
         ...validatedData.studentData,
         scannedAt: new Date().toISOString(),
       },
+      validatedData.numberOfList, // Número de lista
       supabase
     );
 
@@ -103,6 +105,7 @@ export async function POST(request) {
         studentId: student.id,
         fullName: student.fullName,
         reportCard: student.reportCard,
+        numberOfList: attendance.numberOfList,
         recordedAt: attendance.created_at,
       },
     });

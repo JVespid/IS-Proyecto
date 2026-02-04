@@ -16,6 +16,7 @@ const SCHEMA = 'bdLista';
  * @param {string} studentId - ID del estudiante
  * @param {string} currentGroupId - ID de la sesión (CurrentGroup)
  * @param {object} studentData - Datos del estudiante extraídos
+ * @param {string} numberOfList - Número de lista del estudiante (opcional)
  * @param {SupabaseClient} client - Cliente de Supabase (opcional)
  * @returns {Promise<object>} Asistencia registrada
  */
@@ -23,6 +24,7 @@ export const recordAttendance = async (
   studentId,
   currentGroupId,
   studentData,
+  numberOfList = null,
   client = supabase
 ) => {
   try {
@@ -40,12 +42,14 @@ export const recordAttendance = async (
       studentId,
       currentGroupId,
       takeAttendanceStudentData: attendanceData,
+      numberOfList,
     });
 
     log(MODULE_NAME, 'Registrando asistencia', {
       studentId,
       currentGroupId,
       reportCard: studentData.reportCard,
+      numberOfList,
     });
 
     const { data, error } = await client
@@ -56,6 +60,7 @@ export const recordAttendance = async (
           studentId: validatedData.studentId,
           currentGroupId: validatedData.currentGroupId,
           takeAttendanceStudentData: validatedData.takeAttendanceStudentData,
+          numberOfList: validatedData.numberOfList,
         },
       ])
       .select()

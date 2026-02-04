@@ -1,6 +1,7 @@
 /**
  * Middleware de Next.js
  * Protege rutas que requieren autenticación
+ * Solo /login y /register son accesibles sin sesión
  */
 
 import { createServerClient } from '@supabase/ssr';
@@ -63,23 +64,23 @@ export async function middleware(request) {
     data: { session },
   } = await supabase.auth.getSession();
 
-  // Rutas protegidas (requieren autenticación)
-  const protectedRoutes = ['/dashboard', '/generar-qr'];
+  // Rutas PÚBLICAS (no requieren autenticación)
+  const publicRoutes = ['/login', '/register'];
   
-  // Verificar si la ruta actual es protegida
-  const isProtectedRoute = protectedRoutes.some((route) =>
-    request.nextUrl.pathname.startsWith(route)
+  // Verificar si la ruta actual es pública
+  const isPublicRoute = publicRoutes.some((route) =>
+    request.nextUrl.pathname === route
   );
 
-  // Si es una ruta protegida y no hay sesión, redirigir a login
-  if (isProtectedRoute && !session) {
+  // Si NO es ruta pública y NO hay sesión, redirigir a login
+  if (!isPublicRoute && !session) {
     const redirectUrl = new URL('/login', request.url);
     return NextResponse.redirect(redirectUrl);
   }
 
-  // Si el usuario está autenticado y trata de ir a login/register, redirigir a dashboard
+  // Si el usuario está autenticado y trata de ir a login/register, redirigir a /
   if (session && (request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/register')) {
-    const redirectUrl = new URL('/dashboard', request.url);
+    const redirectUrl = new URL('/', request.url);
     return NextResponse.redirect(redirectUrl);
   }
 

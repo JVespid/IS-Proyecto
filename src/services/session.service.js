@@ -15,13 +15,17 @@ const SCHEMA = 'bdLista';
  * Crea una nueva sesión de pase de lista
  * @param {string} subjectId - ID de la materia
  * @param {string} groupId - ID del grupo
- * @param {string} status - Estado de la sesión (default: 'active')
+ * @param {string} professorId - ID del profesor
+ * @param {object} sessionData - Datos opcionales de contexto académico (curriculum, schoolPeriod, degree, school, institute)
+ * @param {string} status - Estado de la sesión (default: 'ACTIVE')
  * @param {SupabaseClient} client - Cliente de Supabase (opcional)
  * @returns {Promise<object>} Sesión creada
  */
 export const createSession = async (
   subjectId,
   groupId,
+  professorId,
+  sessionData = {},
   status = SESSION_STATUS.ACTIVE,
   client = supabase
 ) => {
@@ -30,13 +34,21 @@ export const createSession = async (
     const validatedData = sessionSchema.parse({
       subjectId,
       groupId,
+      professorId,
       status,
+      curriculum: sessionData.curriculum,
+      schoolPeriod: sessionData.schoolPeriod,
+      degree: sessionData.degree,
+      school: sessionData.school,
+      institute: sessionData.institute,
     });
 
     log(MODULE_NAME, 'Creando sesión de pase de lista', {
       subjectId: validatedData.subjectId,
       groupId: validatedData.groupId,
+      professorId: validatedData.professorId,
       status: validatedData.status,
+      schoolPeriod: validatedData.schoolPeriod,
     });
 
     const { data, error } = await client
@@ -46,7 +58,13 @@ export const createSession = async (
         {
           subjectId: validatedData.subjectId,
           groupId: validatedData.groupId,
+          professorId: validatedData.professorId,
           status: validatedData.status,
+          curriculum: validatedData.curriculum,
+          schoolPeriod: validatedData.schoolPeriod,
+          degree: validatedData.degree,
+          school: validatedData.school,
+          institute: validatedData.institute,
         },
       ])
       .select()
@@ -163,10 +181,10 @@ export const getActiveSessionsByProfessor = async (professorId, client = supabas
       .from(TABLE_NAME)
       .select(`
         *,
-        Subject!inner (*),
+        Subject (*),
         Group (*)
       `)
-      .eq('Subject.professorId', professorId)
+      .eq('professorId', professorId)
       .eq('status', SESSION_STATUS.ACTIVE)
       .order('created_at', { ascending: false });
 

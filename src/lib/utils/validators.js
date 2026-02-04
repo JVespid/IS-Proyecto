@@ -15,7 +15,7 @@ import { z } from 'zod';
 export const professorSchema = z.object({
   id: z.string().uuid().optional(),
   name: z.string().min(1, 'El nombre es requerido').max(100),
-  lastName: z.string().min(1, 'El apellido es requerido').max(100),
+  lastName: z.string().max(100).nullable().optional(),
   email: z.string().email('Email inválido'),
   created_at: z.string().datetime().optional(),
 });
@@ -41,10 +41,11 @@ export const groupSchema = z.object({
 
 /**
  * Schema para Subject
+ * NOTA: Subject ahora es una tabla genérica sin vínculo a profesor específico
+ * La relación profesor-materia se establece en CurrentGroup
  */
 export const subjectSchema = z.object({
   id: z.string().uuid().optional(),
-  professorId: z.string().uuid('ID de profesor inválido'),
   Subject: z.string().min(1, 'El nombre de la materia es requerido').max(100),
   created_at: z.string().datetime().optional(),
 });
@@ -57,7 +58,18 @@ export const sessionSchema = z.object({
   id: z.string().uuid().optional(),
   subjectId: z.string().uuid('ID de materia inválido'),
   groupId: z.string().uuid('ID de grupo inválido'),
+  professorId: z.string().uuid('ID de profesor inválido'),
   status: z.enum(['ACTIVE', 'INACTIVE']),
+  
+  // Campos adicionales de contexto académico (opcionales)
+  curriculum: z.string().optional(),
+  schoolPeriod: z.string()
+    .regex(/^\d{5}$/, 'El periodo escolar debe tener formato AAAAS (5 dígitos: año + semestre)')
+    .optional(),
+  degree: z.string().optional(),
+  school: z.string().default('ESCUELA SUPERIOR DE INGENIERIA MECANICA Y ELECTRICA UNIDAD CULHUACAN'),
+  institute: z.string().default('INSTITUTO POLITECNICO NACIONAL'),
+  
   created_at: z.string().datetime().optional(),
 });
 
@@ -75,6 +87,12 @@ export const attendanceSchema = z.object({
     scannedAt: z.string().datetime(),
     additionalData: z.record(z.any()).optional(),
   }),
+  
+  // Número de lista del estudiante (ingresado manualmente)
+  numberOfList: z.string()
+    .regex(/^\d+$/, 'El número de lista debe ser numérico (1, 2, 3, ...)')
+    .optional(),
+  
   created_at: z.string().datetime().optional(),
 });
 
@@ -88,7 +106,17 @@ export const attendanceSchema = z.object({
 export const createSessionSchema = z.object({
   subjectId: z.string().uuid('ID de materia inválido'),
   groupId: z.string().uuid('ID de grupo inválido'),
+  professorId: z.string().uuid('ID de profesor inválido'),
   duration: z.number().min(1).max(180).default(90), // 1-180 minutos
+  
+  // Campos opcionales de contexto académico (CurrentGroup)
+  curriculum: z.string().optional(),
+  schoolPeriod: z.string()
+    .regex(/^\d{5}$/, 'El periodo escolar debe tener formato AAAAS (5 dígitos: año + semestre)')
+    .optional(),
+  degree: z.string().optional(),
+  school: z.string().optional(),
+  institute: z.string().optional(),
 });
 
 /**
@@ -111,6 +139,11 @@ export const recordAttendanceSchema = z.object({
     scannedUrl: z.string().url('URL inválida').optional(),
     additionalData: z.record(z.any()).optional(),
   }),
+  
+  // Número de lista del estudiante (ingresado manualmente)
+  numberOfList: z.string()
+    .regex(/^\d+$/, 'El número de lista debe ser numérico (1, 2, 3, ...)')
+    .optional(),
 });
 
 /**

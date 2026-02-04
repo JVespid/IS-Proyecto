@@ -11,8 +11,26 @@ export default function Input({
   placeholder = '',
   error = '',
   className = '',
+  unstyled = false, // Nueva prop para desactivar estilos predeterminados
   ...props
 }) {
+  // Si unstyled es true, solo aplicar clases personalizadas
+  if (unstyled) {
+    return (
+      <div className="w-full">
+        <input
+          type={type}
+          value={value}
+          onChange={onChange}
+          placeholder={placeholder}
+          className={className}
+          {...props}
+        />
+        {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+      </div>
+    );
+  }
+
   return (
     <div className="w-full">
       <input

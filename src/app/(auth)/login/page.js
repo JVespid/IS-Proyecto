@@ -15,8 +15,8 @@ import Card from '@/components/ui/Card';
 export default function LoginPage() {
   const router = useRouter();
   const { login } = useAuth();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('bernardo.abel.ls1@gmail.com');
+  const [password, setPassword] = useState('wa ha ha123');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 

@@ -252,7 +252,6 @@ Students
 
 Subject
 ├── id (UUID, PK)
-├── professorId (FK → Professors)
 ├── Subject (nombre)
 └── created_at
 
@@ -265,6 +264,7 @@ CurrentGroup (Sesiones de pase de lista)
 ├── id (UUID, PK)
 ├── subjectId (FK → Subject)
 ├── groupId (FK → Group)
+├── professorId (FK → Professors)
 ├── status (active|closed|expired)
 └── created_at
 
@@ -284,8 +284,8 @@ TakeAttendance
 ### Relaciones
 
 ```
-Professors (1) → (N) Subject
-Subject (1) + Group (1) → (N) CurrentGroup
+Professors (1) → (N) CurrentGroup
+Subject (1) + Group (1) + Professor (1) → (N) CurrentGroup
 CurrentGroup (1) → (N) TakeAttendance
 Students (1) → (N) TakeAttendance
 ```

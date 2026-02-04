@@ -28,19 +28,43 @@ export async function POST(request) {
       );
     }
 
+    // Obtener datos del profesor autenticado
+    const { data: professorData, error: profError } = await supabase
+      .schema('bdLista')
+      .from('Professors')
+      .select('id')
+      .eq('email', user.email)
+      .single();
+
+    if (profError || !professorData) {
+      log(MODULE_NAME, 'Profesor no encontrado en BD');
+      return NextResponse.json(
+        { error: 'Profesor no encontrado' },
+        { status: 404 }
+      );
+    }
+
+    const professorId = professorData.id;
+    log(MODULE_NAME, 'Profesor identificado', { professorId });
+
     // Parsear body
     const body = await request.json();
 
     // Validar datos
-    const validatedData = createSessionSchema.parse(body);
+    const validatedData = createSessionSchema.parse({
+      ...body,
+      professorId, // Agregar professorId del usuario autenticado
+    });
 
     log(MODULE_NAME, 'Datos validados', {
       subjectId: validatedData.subjectId,
       groupId: validatedData.groupId,
+      professorId: validatedData.professorId,
       duration: validatedData.duration,
+      schoolPeriod: validatedData.schoolPeriod,
     });
 
-    // Verificar que el profesor tenga acceso a la materia
+    // Verificar que la materia existe (validación simple)
     const subject = await getSubject(validatedData.subjectId, supabase);
     
     if (!subject) {
@@ -51,11 +75,22 @@ export async function POST(request) {
       );
     }
 
+    // Crear objeto con datos de contexto académico
+    const sessionData = {
+      curriculum: validatedData.curriculum,
+      schoolPeriod: validatedData.schoolPeriod,
+      degree: validatedData.degree,
+      school: validatedData.school,
+      institute: validatedData.institute,
+    };
+
     // Crear sesión
     const session = await createSession(
       validatedData.subjectId,
       validatedData.groupId,
-      'active',
+      validatedData.professorId,
+      sessionData,
+      'ACTIVE',
       supabase
     );
 
@@ -67,7 +102,13 @@ export async function POST(request) {
         id: session.id,
         subjectId: session.subjectId,
         groupId: session.groupId,
+        professorId: session.professorId,
         status: session.status,
+        curriculum: session.curriculum,
+        schoolPeriod: session.schoolPeriod,
+        degree: session.degree,
+        school: session.school,
+        institute: session.institute,
         createdAt: session.created_at,
         duration: validatedData.duration,
       },
