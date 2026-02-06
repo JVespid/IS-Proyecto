@@ -217,6 +217,7 @@ USING (
 DROP POLICY IF EXISTS "attendance_insert_public" ON "bdLista"."TakeAttendance";
 DROP POLICY IF EXISTS "attendance_select_professor" ON "bdLista"."TakeAttendance";
 DROP POLICY IF EXISTS "attendance_select_own_student" ON "bdLista"."TakeAttendance";
+DROP POLICY IF EXISTS "attendance_select_all" ON "bdLista"."TakeAttendance";
 
 -- Cualquiera puede registrar asistencia (público para que alumnos puedan escanear QR)
 CREATE POLICY "attendance_insert_public" 
@@ -226,17 +227,15 @@ TO public
 WITH CHECK (true);
 
 -- Los profesores pueden ver asistencias de sus sesiones
+-- Aprovecha que CurrentGroup ya tiene RLS que filtra por professorId
 CREATE POLICY "attendance_select_professor" 
 ON "bdLista"."TakeAttendance"
 FOR SELECT
 TO authenticated
 USING (
   "currentGroupId" IN (
-    SELECT id FROM "bdLista"."CurrentGroup" 
-    WHERE "professorId" IN (
-      SELECT id FROM "bdLista"."Professors" 
-      WHERE email = auth.jwt() ->> 'email'
-    )
+    SELECT id 
+    FROM "bdLista"."CurrentGroup"
   )
 );
 

@@ -2,21 +2,21 @@
 
 > **DOCUMENTO CRÍTICO PARA ASISTENTES DE IA**  
 > Lee este documento COMPLETO antes de hacer cualquier modificación al proyecto.  
-> Última actualización: 2026-02-04
+> Última actualización: 2026-02-06
 
 ---
 
 ## 🚨 INFORMACIÓN CRÍTICA - LEE ESTO PRIMERO
 
-### ⚠️ ESTADO DEL PROYECTO: **FASE DE INICIALIZACIÓN**
+### ⚠️ ESTADO DEL PROYECTO: **FASE DE IMPLEMENTACIÓN DE UI**
 
-Este proyecto está en **fase temprana de desarrollo**. Esto significa:
+Este proyecto está en **fase de implementación de diseño**. Esto significa:
 
-- ✅ **Core functionality está implementada** (95% funcional)
-- ⚠️ **Componentes UI son BÁSICOS y TEMPORALES** (esperando diseño final)
-- ⚠️ **Hay MOCK DATA intencional** (esperando reglas de negocio finales)
-- 🚧 **Features avanzadas están PLANIFICADAS pero NO implementadas**
-- 📋 **Las reglas de negocio pueden cambiar** (base de datos diseñada para flexibilidad)
+- ✅ **Core functionality está implementada** (100% funcional)
+- 🎨 **Implementando diseños finales pantalla por pantalla** (diseños absolutos)
+- ✅ **Mock data será reemplazado** conforme se implementen las pantallas
+- 🎨 **Los diseños son ABSOLUTOS** - deben verse exactamente como se especifica
+- 🚧 **Features avanzadas siguen PLANIFICADAS** (dashboard, reportes, etc.)
 
 ### 🛑 QUÉ **NO** HACER (REGLAS ESTRICTAS)
 
@@ -32,6 +32,7 @@ Este proyecto está en **fase temprana de desarrollo**. Esto significa:
 8. ❌ **NO cambies los clientes de Supabase** (client.js, server.js) - Configuración específica
 9. ❌ **NO elimines logging de desarrollo** - Es crítico para debugging
 10. ❌ **NO implementes features "avanzadas"** si no están en el roadmap acordado
+11. ❌ **NO improvises diseños** - Los diseños son ABSOLUTOS y deben seguirse al pie de la letra
 
 ### ✅ QUÉ **SÍ** HACER (CÓMO CONTRIBUIR CORRECTAMENTE)
 
@@ -42,11 +43,11 @@ Este proyecto está en **fase temprana de desarrollo**. Esto significa:
 3. ✅ **USA los servicios existentes** en lugar de duplicar lógica
 4. ✅ **VALIDA con Zod** en todos los endpoints
 5. ✅ **AGREGA logging** en funciones nuevas (usa el patrón existente)
-6. ✅ **CREA componentes simples** sin over-engineering
-7. ✅ **PREGUNTA antes de modificar** código crítico
+6. ✅ **IMPLEMENTA diseños EXACTOS** - Los diseños son absolutos, no aproximados
+7. ✅ **PREGUNTA si algo del diseño no está claro** antes de asumir
 8. ✅ **DOCUMENTA decisiones** en comentarios si cambias algo importante
-9. ✅ **RESPETA el estado de inicialización** - No sobre-optimices aún
-10. ✅ **USA Tailwind básico** para estilos (diseño final vendrá después)
+9. ✅ **USA Tailwind** con las clases exactas especificadas en el diseño
+10. ✅ **REVISA píxel a píxel** que el resultado coincida con el diseño proporcionado
 
 ---
 
@@ -183,32 +184,34 @@ Estas funcionalidades **NO existen** aún. NO las implementes sin aprobación:
 
 ---
 
-### 🎨 COMPONENTES UI: BÁSICOS y TEMPORALES
+### 🎨 COMPONENTES UI: IMPLEMENTACIÓN DE DISEÑOS
 
-**ESTADO ACTUAL:** Todos los componentes en `src/components/ui/` están **funcionales** pero con **estilos MÍNIMOS**.
+**ESTADO ACTUAL:** Implementando componentes según diseños absolutos proporcionados pantalla por pantalla.
 
-| Componente | Archivo | Estado | Mejoras Pendientes |
-|------------|---------|--------|-------------------|
-| **Button** | `ui/Button.js` | ⚠️ BÁSICO | Animaciones, iconos, más variantes |
-| **Card** | `ui/Card.js` | ⚠️ BÁSICO | Header/footer, variantes, shadows |
-| **Input** | `ui/Input.js` | ⚠️ BÁSICO | Iconos, helper text, variantes |
-| **Select** | `ui/Select.js` | ⚠️ BÁSICO | Búsqueda, multi-select, iconos |
-| **Spinner** | `ui/Spinner.js` | ⚠️ BÁSICO | Más variantes, colores |
+| Componente | Archivo | Estado | Notas |
+|------------|---------|--------|-------|
+| **Button** | `ui/Button.js` | ✅ BASE | Se modificará según diseños proporcionados |
+| **Card** | `ui/Card.js` | ✅ BASE | Se modificará según diseños proporcionados |
+| **Input** | `ui/Input.js` | ✅ BASE | Se modificará según diseños proporcionados |
+| **Select** | `ui/Select.js` | ✅ BASE | Se modificará según diseños proporcionados |
+| **Spinner** | `ui/Spinner.js` | ✅ BASE | Se modificará según diseños proporcionados |
 
-**COMPONENTES FALTANTES** (no crear sin aprobación):
-- ❌ Modal/Dialog
-- ❌ Toast/Alert (existe `react-hot-toast` en package.json pero no implementado)
-- ❌ Table
-- ❌ Tabs
-- ❌ Badge
-- ❌ Dropdown
+**COMPONENTES PENDIENTES** (se crearán cuando el diseño los requiera):
+- ⏳ Modal/Dialog - Esperar especificaciones
+- ⏳ Toast/Alert (`react-hot-toast` instalado) - Esperar especificaciones
+- ⏳ Table - Esperar especificaciones
+- ⏳ Tabs - Esperar especificaciones
+- ⏳ Badge - Esperar especificaciones
+- ⏳ Dropdown - Esperar especificaciones
 
-**REGLA PARA ESTILOS:**
-- ✅ **USAR:** Tailwind clases simples (`bg-blue-600`, `px-4`, `rounded-md`)
+**REGLAS DE IMPLEMENTACIÓN DE DISEÑOS:**
+- ✅ **USAR:** Clases Tailwind EXACTAS según especificaciones del diseño
+- ✅ **SEGUIR:** Diseños al pie de la letra - colores, espaciado, tipografía, bordes, sombras
+- ✅ **VALIDAR:** Que el resultado coincida píxel a píxel con el diseño
+- ❌ **NO IMPROVISAR:** Esperar especificaciones del usuario para cualquier elemento visual
 - ❌ **NO USAR:** CSS modules, styled-components, emotion
-- ❌ **NO AGREGAR:** Librerías de componentes completas (shadcn/ui, Chakra, MUI) sin consultar
-- ✅ **CUANDO MODIFICAR:** Si el usuario pide "mejorar diseño" o "agregar estilos"
-- ❌ **NO MODIFICAR:** Si solo pide funcionalidad nueva
+- ❌ **NO AGREGAR:** Librerías de componentes (shadcn/ui, Chakra, MUI) sin consultar
+- ⚠️ **PREGUNTAR:** Si algo no está claro en el diseño en lugar de asumir
 
 **🚨 REGLA CRÍTICA PARA COMPONENTES UI:**
 
@@ -867,23 +870,24 @@ export default function Page() {
 
 ---
 
-### ¿Por qué Tailwind Básico?
+### ¿Por qué Tailwind CSS?
 
-**DECISIÓN:** Usar Tailwind CSS 4 con clases simples (sin componentes pre-diseñados)
+**DECISIÓN:** Usar Tailwind CSS 4 para implementar diseños exactos
 
 **RAZONES:**
-1. ✅ **Fase de inicialización** - Diseño final viene después
-2. ✅ **Flexibilidad** - Fácil cambiar estilos cuando haya diseño
+1. ✅ **Diseños absolutos** - Los diseños deben verse exactamente como se especifican
+2. ✅ **Utility-first** - Máximo control sobre cada elemento visual
 3. ✅ **Performance** - Bundle pequeño, solo clases usadas
 4. ✅ **No vendor lock-in** - No atado a librería de componentes
-5. ✅ **Prototipado rápido** - Utility-first permite iterar rápido
+5. ✅ **Precisión** - Cada clase Tailwind mapea directamente a CSS específico
 
 **IMPLICACIONES PARA IA:**
-- ✅ **USA** clases Tailwind inline (`bg-blue-600 px-4 py-2 rounded`)
+- ✅ **USA** las clases Tailwind exactas del diseño proporcionado
+- ✅ **SIGUE** las especificaciones de colores, espaciado, tipografía al pie de la letra
 - ❌ **NO agregues** CSS modules, styled-components
 - ❌ **NO instales** shadcn/ui, Chakra, MUI sin consultar
-- ✅ **MANTÉN** estilos simples y funcionales
-- ⚠️ **SI** el usuario pide "mejor diseño", pregunta si quiere librería o custom
+- ❌ **NO improvises** estilos - el usuario proporcionará las especificaciones exactas
+- ⚠️ **PREGUNTA** si algo del diseño no está claro en lugar de asumir
 
 **EJEMPLO ACTUAL:**
 
@@ -1055,9 +1059,9 @@ Estos valores son **configuración real del sistema**:
 
 ## 🗺️ ROADMAP Y PRIORIDADES
 
-### FASE 1: MVP FUNCIONAL (95% COMPLETO) ✅
+### FASE 1: MVP FUNCIONAL (100% COMPLETO) ✅
 
-**Estado:** Casi terminada, solo falta conectar mock data.
+**Estado:** COMPLETADA - Toda la funcionalidad core está implementada y probada.
 
 **Features Implementadas:**
 - ✅ Autenticación de profesores
@@ -1066,51 +1070,48 @@ Estos valores son **configuración real del sistema**:
 - ✅ Web scraping de credenciales
 - ✅ Validación de seguridad
 - ✅ Servicios de datos completos
-- ✅ Componentes UI básicos
+- ✅ Componentes UI básicos funcionales
 
-**Tareas Pendientes para Completar MVP:**
-1. 🔴 **Conectar mock data de materias/grupos** (2-3 horas)
-   - Archivo: `app/(profesor)/generar-qr/page.js`
-   - Usar servicios existentes
-   - Agregar loading state
-
-2. 🟡 **Limpiar datos de prueba en register** (5 minutos)
-   - Archivo: `app/(auth)/register/page.js`
-   - Vaciar valores iniciales
-
-3. 🔴 **Agregar datos iniciales a BD** (1 hora)
-   - Crear al menos 2 materias de ejemplo
-   - Crear al menos 2 grupos de ejemplo
-   - Puede ser via Supabase dashboard o script
-
-**Estimado para 100% MVP:** 4-5 horas
+**Notas:**
+- Mock data será reemplazado conforme se implementen las pantallas con diseño final
+- La arquitectura de servicios está completa y probada
+- La lógica de negocio NO cambiará en la fase de UI
 
 ---
 
-### FASE 2: COMPONENTES DISEÑADOS (0% COMPLETO) 🚧
+### FASE 2: IMPLEMENTACIÓN DE UI (EN PROGRESO) 🎨
 
-**Estado:** No iniciada. Esperando reglas de negocio y diseño final.
+**Estado:** ACTIVA - Implementando diseños pantalla por pantalla.
 
 **Objetivos:**
-- 🎨 Rediseñar componentes UI con identidad visual
-- 🎨 Agregar animaciones y transiciones
-- 🎨 Mejorar UX con feedback visual
-- 🎨 Implementar sistema de toasts/alerts
-- 🎨 Agregar componentes faltantes (Modal, Table, etc.)
+- 🎨 Implementar diseños finales con precisión absoluta
+- 🎨 Integrar funcionalidades existentes con las nuevas pantallas
+- 🎨 Mantener la funcionalidad mientras se mejora la UI
+- 🎨 Crear componentes según diseños proporcionados
+- 🎨 Reemplazar mock data conforme se implementan las pantallas
 
-**Decisiones Pendientes:**
-- ¿Usar librería de componentes (shadcn/ui, Chakra) o diseño custom?
-- ¿Cuál es la paleta de colores oficial?
-- ¿Hay guía de estilo o brand guidelines?
+**Reglas de Implementación:**
+- ✅ **Los diseños son ABSOLUTOS** - deben verse exactamente como se especifican
+- ✅ **No improvisar** - esperar especificaciones del usuario
+- ✅ **Pantalla por pantalla** - implementar de forma secuencial según se proporcionen diseños
+- ✅ **Validar diseño** - confirmar que el resultado coincide píxel a píxel
+- ✅ **Mantener funcionalidad** - la UI es cosmética, los servicios/lógica no cambian
 
 **Prioridades:**
-1. 🔴 **Sistema de notificaciones** (react-hot-toast ya instalado)
-2. 🔴 **Componente Table** (para dashboard de asistencias)
-3. 🟡 **Componente Modal** (para confirmaciones)
-4. 🟡 **Mejorar Button y Card** (más variantes)
-5. 🟢 **Animaciones** (Framer Motion o CSS transitions)
+1. 🔴 **Implementar pantallas según se proporcionen** (orden definido por usuario)
+2. 🔴 **Integrar servicios existentes** con cada pantalla
+3. 🟡 **Crear componentes custom** según diseños
+4. 🟡 **Reemplazar mock data** cuando sea necesario para la pantalla
+5. 🟢 **Agregar animaciones/transiciones** si están especificadas en el diseño
 
-**Estimado:** 16-20 horas
+**Método de Trabajo:**
+- Usuario proporciona diseño de pantalla
+- IA implementa diseño EXACTO
+- IA integra funcionalidad existente
+- Usuario valida resultado
+- Pasar a siguiente pantalla
+
+**Estimado por pantalla:** 2-4 horas (según complejidad)
 
 ---
 
@@ -1274,41 +1275,93 @@ Estos valores son **configuración real del sistema**:
 
 ---
 
-### 📋 ORDEN DE IMPLEMENTACIÓN RECOMENDADO
+### 📋 ORDEN DE IMPLEMENTACIÓN ACTUAL
 
-**Semana 1 - Completar MVP:**
-1. ✅ Conectar mock data de materias/grupos
-2. ✅ Limpiar datos de prueba
-3. ✅ Agregar datos iniciales a BD
-4. ✅ Testing completo del flujo
+**FASE ACTUAL: IMPLEMENTACIÓN DE UI (Diseños Absolutos)**
 
-**Semana 2 - Features Críticas:**
-1. 🔴 Gestión de Materias (UI)
-2. 🔴 Gestión de Grupos (UI)
-3. 🔴 Dashboard de Asistencias
+**Metodología:**
+- El usuario proporciona diseños pantalla por pantalla
+- Cada diseño se implementa de forma EXACTA (píxel a píxel)
+- Se integran funcionalidades existentes con cada pantalla
+- Se valida el resultado antes de pasar a la siguiente pantalla
+- El orden lo define el usuario según prioridades del proyecto
 
-**Semana 3 - Mejoras UI/UX:**
-1. 🎨 Sistema de toasts/alerts
-2. 🎨 Componente Table
-3. 🎨 Mejorar componentes existentes
-4. 🎨 Agregar loading states
+**Proceso por Pantalla:**
+1. 📐 Usuario proporciona especificaciones de diseño
+2. 🔍 IA analiza diseño y componentes necesarios
+3. 💻 IA implementa diseño EXACTO con Tailwind
+4. 🔗 IA integra servicios/lógica existente
+5. ✅ Usuario valida resultado
+6. ➡️ Pasar a siguiente pantalla
 
-**Semana 4 - Features Adicionales:**
-1. 🟡 Gestión de sesiones
-2. 🟡 Perfil de profesor
-3. 🟡 Exportación básica (CSV)
+**Pantallas Pendientes de Diseño:**
+- ⏳ Todas las pantallas se implementarán según el usuario las proporcione
+- ⏳ No hay orden predefinido - depende de prioridades del usuario
+- ⏳ Mock data se reemplaza conforme se requiera en cada pantalla
 
-**Futuro - Features Avanzadas:**
-- 🔮 Reportes y gráficas
-- 🔮 Notificaciones
-- 🔮 PWA
-- 🔮 Real-time updates
+**IMPORTANTE:**
+- ✅ La funcionalidad NO cambia - solo la presentación visual
+- ✅ Los servicios y lógica de negocio ya están completos
+- ✅ Cada pantalla es independiente - se puede empezar por cualquiera
+- ❌ NO se implementan pantallas sin diseño específico
 
 ---
 
 ## 🚀 GUÍA RÁPIDA DE IMPLEMENTACIÓN
 
-### 🆕 Cómo Agregar una Nueva Feature
+### � Cómo Implementar una Pantalla con Diseño (PRIORIDAD ACTUAL)
+
+**CHECKLIST PARA IMPLEMENTACIÓN DE UI:**
+
+1. **Recepción de Diseño** (1-2 min)
+   - [ ] Usuario proporciona especificaciones de diseño (imagen, Figma, descripción detallada)
+   - [ ] Identificar qué pantalla/componente se va a implementar
+   - [ ] Confirmar que se entienden todas las especificaciones visuales
+
+2. **Análisis de Componentes** (3-5 min)
+   - [ ] ¿Qué componentes UI se necesitan? (Button, Input, Card, nuevos componentes)
+   - [ ] ¿Los componentes existentes sirven o hay que crear nuevos?
+   - [ ] ¿Qué servicios existentes se van a integrar?
+   - [ ] ¿Se necesita reemplazar mock data en esta pantalla?
+
+3. **Implementación de Diseño** (30-120 min según complejidad)
+   - [ ] Crear/modificar archivo de página/componente
+   - [ ] Implementar estructura HTML/JSX exacta
+   - [ ] Aplicar clases Tailwind EXACTAS según diseño
+   - [ ] Verificar colores, espaciado, tipografía, bordes, sombras
+   - [ ] Asegurar responsive design si está especificado
+
+4. **Integración de Funcionalidad** (15-45 min)
+   - [ ] Importar servicios necesarios
+   - [ ] Integrar useAuth, useQRScanner u otros hooks si aplica
+   - [ ] Conectar eventos (onClick, onChange, onSubmit)
+   - [ ] Agregar validación de formularios si aplica
+   - [ ] Manejar estados de loading/error
+
+5. **Validación Visual** (5-10 min)
+   - [ ] Comparar píxel a píxel con el diseño proporcionado
+   - [ ] Verificar colores exactos
+   - [ ] Verificar espaciado y alineación
+   - [ ] Verificar tipografía (tamaño, peso, familia)
+   - [ ] Verificar estados (hover, focus, active, disabled)
+
+6. **Testing Funcional** (10-15 min)
+   - [ ] Probar que la funcionalidad existente sigue funcionando
+   - [ ] Verificar integración con servicios
+   - [ ] Probar casos de error
+   - [ ] Verificar responsive (si aplica)
+
+**REGLAS CRÍTICAS:**
+- ✅ El diseño es ABSOLUTO - no improvisar
+- ✅ Preguntar si algo no está claro
+- ✅ La funcionalidad NO cambia - solo la presentación
+- ✅ Usar servicios existentes - no duplicar lógica
+- ❌ NO crear funcionalidad nueva sin aprobación
+- ❌ NO modificar servicios/lógica de negocio
+
+---
+
+### 🆕 Cómo Agregar una Nueva Feature (FUNCIONALIDAD, NO UI)
 
 **CHECKLIST COMPLETO:**
 

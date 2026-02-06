@@ -1,16 +1,13 @@
 /**
  * Página de inicio
- * Muestra pantalla de bienvenida para usuarios autenticados
+ * Muestra mensaje de sesión iniciada correctamente
  */
 
 'use client';
 
-import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
-import Button from '@/components/ui/Button';
 
 export default function Home() {
-  const router = useRouter();
   const { user, loading } = useAuth();
 
   if (loading) {
@@ -26,13 +23,12 @@ export default function Home() {
     return null;
   }
 
-  // Pantalla de bienvenida para usuarios autenticados
+  // Mensaje simple para usuarios autenticados
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center gap-6 bg-gradient-to-b from-blue-50 to-white">
-      <h1 className="text-4xl font-bold text-gray-900">Bienvenido</h1>
-      <Button onClick={() => router.push('/dashboard')} variant="primary">
-        Ir al Dashboard
-      </Button>
+    <div className="min-h-screen flex items-center justify-center bg-white">
+      <h1 className="text-4xl font-bold text-black">
+        sesión iniciada correctamente
+      </h1>
     </div>
   );
 }

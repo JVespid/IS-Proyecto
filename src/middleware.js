@@ -72,16 +72,30 @@ export async function middleware(request) {
     request.nextUrl.pathname === route
   );
 
+  // Si el usuario está autenticado y trata de ir a login/register, redirigir a /
+  if (session && isPublicRoute) {
+    const redirectUrl = new URL('/', request.url);
+    const redirectResponse = NextResponse.redirect(redirectUrl);
+    
+    // Transferir cookies de sesión a la respuesta de redirección
+    response.cookies.getAll().forEach((cookie) => {
+      redirectResponse.cookies.set(cookie.name, cookie.value);
+    });
+    
+    return redirectResponse;
+  }
+
   // Si NO es ruta pública y NO hay sesión, redirigir a login
   if (!isPublicRoute && !session) {
     const redirectUrl = new URL('/login', request.url);
-    return NextResponse.redirect(redirectUrl);
-  }
-
-  // Si el usuario está autenticado y trata de ir a login/register, redirigir a /
-  if (session && (request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/register')) {
-    const redirectUrl = new URL('/', request.url);
-    return NextResponse.redirect(redirectUrl);
+    const redirectResponse = NextResponse.redirect(redirectUrl);
+    
+    // Transferir cookies a la respuesta de redirección
+    response.cookies.getAll().forEach((cookie) => {
+      redirectResponse.cookies.set(cookie.name, cookie.value);
+    });
+    
+    return redirectResponse;
   }
 
   return response;

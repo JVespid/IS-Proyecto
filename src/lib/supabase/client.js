@@ -3,7 +3,7 @@
  * Usado en componentes que corren en el navegador
  */
 
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createBrowserClient } from '@supabase/ssr';
 import { log } from '@/constants/config';
 
 const MODULE_NAME = 'Supabase Client';
@@ -13,10 +13,10 @@ const MODULE_NAME = 'Supabase Client';
  * @returns {SupabaseClient} Cliente de Supabase
  */
 export const createClient = () => {
-  const supabase = createClientComponentClient({
-    supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
-    supabaseKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-  });
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  );
 
   log(MODULE_NAME, 'Cliente de Supabase creado para browser');
 

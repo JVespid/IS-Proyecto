@@ -4,6 +4,8 @@
 
 Este sistema está construido con **Next.js 16** (App Router), **Supabase** como backend, y será desplegado en **Vercel**. Utiliza una arquitectura modular y escalable basada en servicios.
 
+**Estado Actual:** Fase de Implementación de UI - Diseñando pantallas con especificaciones absolutas mientras se mantiene la arquitectura funcional existente.
+
 ---
 
 ## 🏗️ Arquitectura de Capas

@@ -15,9 +15,9 @@ export default function RegisterPage() {
   const router = useRouter();
   const { register } = useAuth();
   const [formData, setFormData] = useState({
-    name: 'Bernardo Lopez',
-    email: 'bernardo.abel.ls1@gmail.com',
-    password: 'wa ha ha123',
+    name: '',
+    email: '',
+    password: '',
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -35,7 +35,7 @@ export default function RegisterPage() {
     });
 
     if (result?.success) {
-      router.push('/');
+      router.push('/login');
     } else {
       setError(result?.error || 'Error al registrarse');
       setLoading(false);
@@ -103,7 +103,7 @@ export default function RegisterPage() {
                 type="password"
                 value={formData.password}
                 onChange={(e) => handleChange('password', e.target.value)}
-                placeholder="ejemplo@ipn.mx"
+                placeholder="••••••••"
                 required
                 unstyled={true}
                 className="w-full px-4 py-3 bg-[#d9d9d9] text-gray-800 placeholder-gray-500 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-600"
@@ -119,7 +119,7 @@ export default function RegisterPage() {
                 type="text"
                 value={formData.name}
                 onChange={(e) => handleChange('name', e.target.value)}
-                placeholder="ejemplo@ipn.mx"
+                placeholder="Juan Pérez"
                 required
                 unstyled={true}
                 className="w-full px-4 py-3 bg-[#d9d9d9] text-gray-800 placeholder-gray-500 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-600"
@@ -130,7 +130,7 @@ export default function RegisterPage() {
             <Button
               type="submit"
               unstyled={true}
-              className="w-full bg-[#53b099] hover:bg-[#5aba9f] cursor-pointer text-black font-semibold py-2 rounded-4xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-[#53b099] hover:bg-[#5aba9f] cursor-pointer text-black font-semibold py-2 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={loading}
             >
               {loading ? 'Registrando...' : 'Registrarse'}
