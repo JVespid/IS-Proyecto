@@ -65,15 +65,24 @@ export async function middleware(request) {
   } = await supabase.auth.getSession();
 
   // Rutas PÚBLICAS (no requieren autenticación)
-  const publicRoutes = ['/login', '/register'];
+  const publicRoutes = ['/login', '/register', '/logout'];
+  
+  // Rutas de autenticación (login/register) - usuarios autenticados no pueden acceder
+  const authRoutes = ['/login', '/register'];
   
   // Verificar si la ruta actual es pública
   const isPublicRoute = publicRoutes.some((route) =>
     request.nextUrl.pathname === route
   );
+  
+  // Verificar si es ruta de auth (login/register)
+  const isAuthRoute = authRoutes.some((route) =>
+    request.nextUrl.pathname === route
+  );
 
   // Si el usuario está autenticado y trata de ir a login/register, redirigir a /
-  if (session && isPublicRoute) {
+  // (logout NO se redirige porque necesita cerrar sesión)
+  if (session && isAuthRoute) {
     const redirectUrl = new URL('/', request.url);
     const redirectResponse = NextResponse.redirect(redirectUrl);
     

@@ -12,6 +12,9 @@ import { log, logError } from '@/constants/config';
 
 const MODULE_NAME = 'ListPage';
 
+// Forzar renderizado dinámico para evitar errores de prerender con useSearchParams
+export const dynamic = 'force-dynamic';
+
 export default function ListPage() {
   const searchParams = useSearchParams();
   const currentGroupId = searchParams.get('currentGroupId');
