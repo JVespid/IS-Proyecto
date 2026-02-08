@@ -1,16 +1,27 @@
 /**
  * Página de Lista de Asistencias
  * Muestra tabla de alumnos que pasaron lista en una sesión específica
+ *
+ * REGLA DE NEGOCIO IMPORTANTE:
+ * - El length de takeAttendanceStudentData debe ser el MISMO para todos los estudiantes
+ * - Representa el número total de clases/días en que se ha pasado lista
  */
 
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
-import { log, logError } from '@/constants/config';
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
+import { log, logError } from "@/constants/config";
+import { AttendanceIcon } from "@/components/ui/AttendanceIcons";
 
-const MODULE_NAME = 'ListPage';
+const MODULE_NAME = "ListPage";
+
+// Configuración personalizable para diseño
+const DESIGN_CONFIG = {
+  CELL_SIZE: 16, // Tamaño de cada cuadrado de asistencia (px) - ¡PERSONALIZABLE!
+  CELL_GAP: 0, // Espacio entre cuadrados (px) - ¡PERSONALIZABLE!
+};
 
 /**
  * Componente interno que usa useSearchParams
@@ -18,54 +29,67 @@ const MODULE_NAME = 'ListPage';
  */
 function ListContent() {
   const searchParams = useSearchParams();
-  const currentGroupId = searchParams.get('currentGroupId');
-  
+  const currentGroupId = searchParams.get("currentGroupId");
+
   const [attendances, setAttendances] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   useEffect(() => {
     const fetchAttendances = async () => {
       if (!currentGroupId) {
-        setError('No se proporcionó ID de sesión');
+        setError("No se proporcionó ID de sesión");
         setLoading(false);
         return;
       }
 
       try {
-        log(MODULE_NAME, 'Cargando asistencias', { currentGroupId });
-        
+        log(MODULE_NAME, "Cargando asistencias", { currentGroupId });
+
         // Crear cliente de Supabase
         const supabase = createClient();
-        
+
         // Verificar autenticación (para debugging RLS)
-        const { data: { session } } = await supabase.auth.getSession();
-        console.log('🔐 Usuario autenticado:', session?.user?.email);
-        
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        console.log("🔐 Usuario autenticado:", session?.user?.email);
+
         // Consulta con sintaxis simple de JOIN (patrón usado en todo el proyecto)
         const { data, error: queryError } = await supabase
-          .schema('bdLista')
-          .from('TakeAttendance')
-          .select(`
+          .schema("bdLista")
+          .from("TakeAttendance")
+          .select(
+            `
             *,
             Students (*)
-          `)
-          .eq('currentGroupId', currentGroupId)
-          .order('created_at', { ascending: false });
+          `,
+          )
+          .eq("currentGroupId", currentGroupId)
+          .order("created_at", { ascending: false });
 
         if (queryError) {
-          logError(MODULE_NAME, 'Error en query', queryError);
-          console.error('❌ Error Supabase:', queryError);
+          logError(MODULE_NAME, "Error en query", queryError);
+          console.error("❌ Error Supabase:", queryError);
           throw queryError;
         }
 
-        console.log('📊 Datos obtenidos:', data);
-        console.log('📊 Cantidad de registros:', data?.length);
-        
-        setAttendances(data || []);
-        log(MODULE_NAME, 'Asistencias cargadas', { count: data?.length || 0 });
+        console.log("📊 Datos obtenidos:", data);
+        console.log("📊 Cantidad de registros:", data?.length);
+
+        // Ordenar por número de lista (numéricamente)
+        const sortedData = (data || []).sort((a, b) => {
+          const numA = parseInt(a.numberOfList || "999", 10);
+          const numB = parseInt(b.numberOfList || "999", 10);
+          return numA - numB;
+        });
+
+        setAttendances(sortedData);
+        log(MODULE_NAME, "Asistencias cargadas y ordenadas", {
+          count: sortedData.length,
+        });
       } catch (err) {
-        logError(MODULE_NAME, 'Error al cargar asistencias', err);
+        logError(MODULE_NAME, "Error al cargar asistencias", err);
         setError(`Error al cargar las asistencias: ${err.message}`);
       } finally {
         setLoading(false);
@@ -77,73 +101,162 @@ function ListContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-lg text-gray-600">Cargando asistencias...</div>
+      <div className="min-h-screen flex items-center justify-center bg-[#3eb575]">
+        <div className="text-lg text-white">Cargando asistencias...</div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-[#3eb575]">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-red-600 mb-2">Error</h1>
-          <p className="text-gray-700">{error}</p>
+          <h1 className="text-2xl font-bold text-white mb-2">Error</h1>
+          <p className="text-white">{error}</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Lista de Asistencias
-          </h1>
-          <p className="text-gray-600">
-            Total de registros: {attendances.length}
-          </p>
-          <p className="text-sm text-gray-500 mt-1">
-            Sesión ID: {currentGroupId}
-          </p>
-        </div>
+    <div className="min-h-screen bg-[#3eb575] p-0 overflow-hidden flex items-center justify-center">
+      {/* Scroll personalizado */}
+      <style jsx global>{`
+        /* Scroll personalizado - track grueso, thumb centrado */
+        .custom-scroll::-webkit-scrollbar {
+          width: 16px;
+          height: 16px;
+        }
 
-        {/* Table */}
+        .custom-scroll::-webkit-scrollbar-track {
+          background: white;
+          border-radius: 8px;
+        }
+
+        .custom-scroll::-webkit-scrollbar-thumb {
+          background: #bfbfbf;
+          border-radius: 8px;
+          border: 4px solid white; /* Crea efecto centrado */
+        }
+
+        .custom-scroll::-webkit-scrollbar-thumb:hover {
+          background: #a0a0a0;
+        }
+      `}</style>
+
+      {/* Contenedor principal con gradiente - Centrado verticalmente */}
+      <div className="max-h-[50vh] min-w-11/12 p-2 rounded-2xl bg-[#ccffd9] flex items-start justify-center overflow-auto custom-scroll">
         {attendances.length === 0 ? (
-          <div className="bg-white rounded-lg shadow p-8 text-center">
-            <p className="text-gray-500 text-lg">
+          <div className="flex items-center justify-center h-full">
+            <p className="text-[#616c63] text-lg">
               No hay asistencias registradas para esta sesión
             </p>
           </div>
         ) : (
-          <div className="bg-white rounded-lg shadow overflow-hidden">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-100">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
-                    Número de Lista
+          <div className="w-full max-w-full overflow-x-auto custom-scroll p-8 border border-[#65ccef] bg-gradient-to-b from-[#effff3] to-[#ccffd9] flex flex-col items-center justify-center">
+            <table
+              className="border-collapse border border-[#616c63] "
+              style={{ width: "max-content" }}
+            >
+              {/* Header de la tabla */}
+              <thead>
+                <tr className="border-b-2 border-[#616c63]">
+                  <th
+                    className="px-3 py-2 text-xs font-semibold text-[#616c63] uppercase tracking-wide border-r border-[#616c63] text-center bg-[#effff3]"
+                    style={{ width: "140px" }}
+                  >
+                    No. lista
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+                  <th
+                    className="px-3 py-2 text-xs font-semibold text-[#616c63] uppercase tracking-wide border-r border-[#616c63] text-center bg-[#effff3]"
+                    style={{ width: "200px" }}
+                  >
                     Boleta
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
+                  <th
+                    className="px-3 py-2 text-xs font-semibold text-[#616c63] uppercase tracking-wide border-r border-[#616c63] text-center bg-[#effff3]"
+                    style={{ width: "360px" }}
+                  >
                     Nombre
+                  </th>
+                  <th
+                    className="px-0 py-2 text-[#616c63] bg-[#effff3] border-r border-[#616c63]"
+                    style={{ width: "max-content" }}
+                  >
+                    <div className="text-center ">
+                      <div className="text-lg font-bold uppercase tracking-wider mb-1 border-b border-[#616c63]">
+                        Asistencia
+                      </div>
+                      <div className="text-[10px] font-normal">clases</div>
+                    </div>
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {attendances.map((attendance) => (
-                  <tr key={attendance.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {attendance.numberOfList || 'N/A'}
+
+              {/* Cuerpo de la tabla */}
+              <tbody>
+                {attendances.map((attendance, index) => (
+                  <tr
+                    key={attendance.id}
+                    className="border-b border-[#616c63] hover:bg-[#effff3]/50 transition-colors"
+                  >
+                    {/* Número de lista */}
+                    <td
+                      className="px-3 py-2 text-center text-sm font-medium text-[#616c63] border-r border-[#616c63] overflow-hidden text-ellipsis whitespace-nowrap"
+                      style={{ width: "70px" }}
+                    >
+                      {attendance.numberOfList || index + 1}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {attendance.Students?.reportCard || 'N/A'}
+
+                    {/* Boleta */}
+                    <td
+                      className="px-3 py-2 text-center text-sm text-[#616c63] border-r border-[#616c63] overflow-hidden text-ellipsis whitespace-nowrap"
+                      style={{ width: "100px" }}
+                    >
+                      {attendance.Students?.reportCard || "N/A"}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {attendance.Students?.fullName || 'N/A'}
+
+                    {/* Nombre */}
+                    <td
+                      className="px-3 py-2 text-center text-sm text-[#616c63] border-r border-[#616c63] overflow-hidden text-ellipsis whitespace-nowrap"
+                      style={{ width: "180px" }}
+                    >
+                      {attendance.Students?.fullName || "N/A"}
+                    </td>
+
+                    {/* Cuadrícula de asistencias - SIN padding, altura 100% */}
+                    <td className="border-r border-[#616c63] p-0 h-px box-border">
+                      <div
+                        className="flex items-center justify-start h-full"
+                        style={{
+                          gap: `${DESIGN_CONFIG.CELL_GAP}px`,
+                        }}
+                      >
+                        {attendance.takeAttendanceStudentData &&
+                        Array.isArray(attendance.takeAttendanceStudentData) ? (
+                          attendance.takeAttendanceStudentData.map(
+                            (record, idx) => (
+                              <div
+                                key={idx}
+                                className="flex items-center justify-center border border-[#616c63] text-[#616c63] h-full"
+                                style={{
+                                  width: `${DESIGN_CONFIG.CELL_SIZE}px`,
+                                  minWidth: `${DESIGN_CONFIG.CELL_SIZE}px`,
+                                }}
+                              >
+                                <AttendanceIcon
+                                  attendance={record}
+                                  size={DESIGN_CONFIG.CELL_SIZE - 4}
+                                />
+                              </div>
+                            ),
+                          )
+                        ) : (
+                          <span className="text-xs text-[#616c63]">
+                            Sin datos
+                          </span>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
