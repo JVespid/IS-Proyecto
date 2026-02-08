@@ -12,10 +12,11 @@ import { log, logError } from '@/constants/config';
 
 const MODULE_NAME = 'ListPage';
 
-// Forzar renderizado dinámico para evitar errores de prerender con useSearchParams
-export const dynamic = 'force-dynamic';
-
-export default function ListPage() {
+/**
+ * Componente interno que usa useSearchParams
+ * Debe estar separado para evitar hydration errors
+ */
+function ListContent() {
   const searchParams = useSearchParams();
   const currentGroupId = searchParams.get('currentGroupId');
   
@@ -153,4 +154,12 @@ export default function ListPage() {
       </div>
     </div>
   );
+}
+
+/**
+ * Componente wrapper principal
+ * El Suspense en layout.js maneja el loading de useSearchParams
+ */
+export default function ListPage() {
+  return <ListContent />;
 }

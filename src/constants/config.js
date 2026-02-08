@@ -44,6 +44,7 @@ export const ROUTES = {
   REGISTER: "/register",
   DASHBOARD: "/dashboard",
   GENERAR_QR: "/generar-qr",
+  LIST: (currentGroupId) => `/list?currentGroupId=${currentGroupId}`,
   ASISTENCIA: (sessionId) => `/asistencia/${sessionId}`,
   API: {
     AUTH_CALLBACK: "/api/auth/callback",
