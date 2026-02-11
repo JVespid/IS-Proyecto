@@ -27,6 +27,13 @@ export default function RegisterPage() {
     setError('');
     setLoading(true);
 
+    // Validar dominio de correo @ipn.mx
+    if (!formData.email.endsWith('@ipn.mx')) {
+      setError('Debe usar un correo institucional @ipn.mx');
+      setLoading(false);
+      return;
+    }
+
     const result = await register({
       name: formData.name,
       lastName: null,

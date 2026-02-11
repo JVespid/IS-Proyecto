@@ -16,7 +16,10 @@ export const professorSchema = z.object({
   id: z.string().uuid().optional(),
   name: z.string().min(1, 'El nombre es requerido').max(100),
   lastName: z.string().max(100).nullable().optional(),
-  email: z.string().email('Email inválido'),
+  email: z.string().email('Email inválido').refine(
+    (val) => val.endsWith('@ipn.mx'),
+    { message: 'Debe ser un correo institucional @ipn.mx' }
+  ),
   created_at: z.string().datetime().optional(),
 });
 
@@ -167,7 +170,10 @@ export const loginSchema = z.object({
 export const registerSchema = z.object({
   name: z.string().min(1, 'El nombre es requerido').max(100),
   lastName: z.string().min(1, 'El apellido es requerido').max(100),
-  email: z.string().email('Email inválido'),
+  email: z.string().email('Email inválido').refine(
+    (val) => val.endsWith('@ipn.mx'),
+    { message: 'Debe ser un correo institucional @ipn.mx' }
+  ),
   password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres'),
 });
 
