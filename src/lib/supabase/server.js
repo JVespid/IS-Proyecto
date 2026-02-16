@@ -1,53 +1,66 @@
 /**
  * Cliente de Supabase para Server Components y API Routes
  * Usado en componentes del servidor y rutas de API
+ * Migrado a @supabase/ssr (API moderna)
  */
 
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createServerClient as createSSRClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { log } from '@/constants/config';
 
 const MODULE_NAME = 'Supabase Server';
 
 /**
- * Crea cliente de Supabase para API Route Handlers
- * @returns {SupabaseClient} Cliente de Supabase
+ * Crea cliente de Supabase para Server Components y API Routes
+ * Utiliza @supabase/ssr para manejo moderno de cookies
+ * @returns {Promise<SupabaseClient>} Cliente de Supabase
  */
 export const createServerClient = async () => {
   const cookieStore = await cookies();
-  
-  const supabase = createRouteHandlerClient(
-    { cookies: () => cookieStore },
+
+  const supabase = createSSRClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     {
-      supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
-      supabaseKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+      cookies: {
+        get(name) {
+          return cookieStore.get(name)?.value;
+        },
+        set(name, value, options) {
+          try {
+            cookieStore.set(name, value, options);
+          } catch (error) {
+            // Ignorar error en middleware/route handlers
+            // Las cookies se establecerán en la respuesta
+          }
+        },
+        remove(name, options) {
+          try {
+            cookieStore.set(name, '', {
+              ...options,
+              maxAge: 0,
+            });
+          } catch (error) {
+            // Ignorar error en middleware/route handlers
+          }
+        },
+      },
     }
   );
 
-  log(MODULE_NAME, 'Cliente de Supabase creado para API Route');
+  log(MODULE_NAME, 'Cliente de Supabase creado con @supabase/ssr');
 
   return supabase;
 };
 
 /**
  * Crea cliente de Supabase para Server Components
- * @returns {SupabaseClient} Cliente de Supabase
+ * @deprecated Use createServerClient instead (funcionalidad unificada)
+ * @returns {Promise<SupabaseClient>} Cliente de Supabase
  */
 export const createServerComponentSupabaseClient = async () => {
-  const cookieStore = await cookies();
-  
-  const supabase = createServerComponentClient(
-    { cookies: () => cookieStore },
-    {
-      supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
-      supabaseKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-    }
-  );
-
-  log(MODULE_NAME, 'Cliente de Supabase creado para Server Component');
-
-  return supabase;
+  log(MODULE_NAME, 'DEPRECATED: Use createServerClient() en su lugar');
+  return createServerClient();
 };
 
 /**

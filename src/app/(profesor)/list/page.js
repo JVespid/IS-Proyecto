@@ -153,7 +153,7 @@ function ListContent() {
             </p>
           </div>
         ) : (
-          <div className="w-full max-w-full overflow-x-auto custom-scroll p-8 border border-[#65ccef] bg-gradient-to-b from-[#effff3] to-[#ccffd9] flex flex-col items-center justify-center">
+          <div className="w-full max-w-full overflow-x-auto custom-scroll p-8 border border-[#65ccef] bg-linear-to-b from-[#effff3] to-[#ccffd9] flex flex-col items-center justify-center">
             <table
               className="border-collapse border border-[#616c63] "
               style={{ width: "max-content" }}

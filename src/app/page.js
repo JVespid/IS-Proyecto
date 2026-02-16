@@ -147,7 +147,7 @@ export default function Home() {
 
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-400 to-green-300">
+      <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-green-400 to-green-300">
         <Spinner size="lg" />
       </div>
     );
@@ -158,7 +158,7 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-400 to-green-300 p-8">
+    <div className="min-h-screen bg-linear-to-br from-green-400 to-green-300 p-8">
       <div className="max-w-7xl mx-auto">
         {/* Header con botón crear grupo */}
         <div className="mb-6 flex justify-between items-center">
@@ -188,7 +188,7 @@ export default function Home() {
         </div>
 
         {/* Card con tabla */}
-        <div className="bg-gradient-to-br from-blue-50 to-white rounded-2xl shadow-2xl border-2 border-blue-200 p-8">
+        <div className="bg-linear-to-br from-blue-50 to-white rounded-2xl shadow-2xl border-2 border-blue-200 p-8">
           {error && (
             <div className="mb-4 p-4 bg-red-100 text-red-700 rounded-lg">
               {error}

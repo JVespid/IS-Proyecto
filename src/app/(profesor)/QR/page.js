@@ -63,7 +63,7 @@ export default function QRPage() {
 
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-400 to-green-300">
+      <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-green-400 to-green-300">
         <Spinner size="lg" />
       </div>
     );
@@ -71,7 +71,7 @@ export default function QRPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-400 to-green-300">
+      <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-green-400 to-green-300">
         <div className="bg-white p-8 rounded-lg shadow-lg">
           <p className="text-red-600 font-semibold">{error}</p>
         </div>
@@ -84,16 +84,16 @@ export default function QRPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-400 to-green-300 flex items-center justify-center p-8">
+    <div className="min-h-screen bg-linear-to-br from-green-400 to-green-300 flex items-center justify-center p-8">
       <div className="w-full max-w-2xl">
-        <div className="bg-gradient-to-br from-blue-50 to-white rounded-2xl shadow-2xl border-2 border-blue-200 p-8">
+        <div className="bg-linear-to-br from-blue-50 to-white rounded-2xl shadow-2xl border-2 border-blue-200 p-8">
           {/* Título */}
           <h1 className="text-3xl font-bold text-gray-800 text-center mb-8">
             Generar QR
           </h1>
 
           {/* Área del QR */}
-          <div className="bg-gray-200 rounded-lg border-2 border-gray-300 p-8 mb-8 flex items-center justify-center min-h-[400px]">
+          <div className="bg-gray-200 rounded-lg border-2 border-gray-300 p-8 mb-8 flex items-center justify-center min-h-100">
             {currentGroupId ? (
               <QRGenerator 
                 sessionId={currentGroupId} 

@@ -53,7 +53,7 @@ export default function EditGroupPage({ params }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-400 to-green-300">
+      <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-green-400 to-green-300">
         <Spinner size="lg" />
       </div>
     );
@@ -61,7 +61,7 @@ export default function EditGroupPage({ params }) {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-400 to-green-300">
+      <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-green-400 to-green-300">
         <div className="bg-white p-8 rounded-lg shadow-lg">
           <p className="text-red-600 font-semibold">{error}</p>
         </div>
