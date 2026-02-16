@@ -9,7 +9,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { log, logError } from "@/constants/config";
@@ -270,9 +270,17 @@ function ListContent() {
 }
 
 /**
- * Componente wrapper principal
- * El Suspense en layout.js maneja el loading de useSearchParams
+ * Componente wrapper principal con Suspense boundary
+ * Requerido por Next.js 16 para componentes que usan useSearchParams
  */
 export default function ListPage() {
-  return <ListContent />;
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-gray-600">Cargando lista de asistencia...</div>
+      </div>
+    }>
+      <ListContent />
+    </Suspense>
+  );
 }
