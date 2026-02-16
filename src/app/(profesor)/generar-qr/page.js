@@ -1,5 +1,9 @@
 /**
- * Página de Generación de QR
+ * Página de Generación de QR - DEPRECATED
+ * 
+ * ⚠️ Esta página está obsoleta y se mantiene solo por compatibilidad.
+ * ⚠️ Usar en su lugar: /QR?currentGroupId=X
+ * 
  * Permite al profesor crear una sesión y generar QR
  */
 

@@ -3,7 +3,6 @@
  * Maneja todas las operaciones relacionadas con la tabla CurrentGroup
  */
 
-import { supabase } from '@/lib/supabase/client';
 import { sessionSchema } from '@/lib/utils/validators';
 import { SESSION_STATUS, log, logError } from '@/constants/config';
 
@@ -27,8 +26,11 @@ export const createSession = async (
   professorId,
   sessionData = {},
   status = SESSION_STATUS.ACTIVE,
-  client = supabase
+  client
 ) => {
+  if (!client) {
+    throw new Error('Supabase client is required');
+  }
   try {
     // Validar datos con Zod
     const validatedData = sessionSchema.parse({
@@ -88,7 +90,10 @@ export const createSession = async (
  * @param {SupabaseClient} client - Cliente de Supabase (opcional)
  * @returns {Promise<object|null>} Sesión encontrada o null
  */
-export const getById = async (sessionId, client = supabase) => {
+export const getById = async (sessionId, client) => {
+  if (!client) {
+    throw new Error('Supabase client is required');
+  }
   try {
     log(MODULE_NAME, 'Obteniendo sesión por ID', { sessionId });
 
@@ -129,7 +134,10 @@ export const getById = async (sessionId, client = supabase) => {
  * @param {SupabaseClient} client - Cliente de Supabase (opcional)
  * @returns {Promise<object>} Sesión actualizada
  */
-export const updateStatus = async (sessionId, status, client = supabase) => {
+export const updateStatus = async (sessionId, status, client) => {
+  if (!client) {
+    throw new Error('Supabase client is required');
+  }
   try {
     log(MODULE_NAME, 'Actualizando estado de sesión', { sessionId, status });
 
@@ -162,7 +170,10 @@ export const updateStatus = async (sessionId, status, client = supabase) => {
  * @param {SupabaseClient} client - Cliente de Supabase (opcional)
  * @returns {Promise<object>} Sesión cerrada
  */
-export const closeSession = async (sessionId, client = supabase) => {
+export const closeSession = async (sessionId, client) => {
+  if (!client) {
+    throw new Error('Supabase client is required');
+  }
   return await updateStatus(sessionId, SESSION_STATUS.INACTIVE, client);
 };
 
@@ -172,7 +183,10 @@ export const closeSession = async (sessionId, client = supabase) => {
  * @param {SupabaseClient} client - Cliente de Supabase (opcional)
  * @returns {Promise<Array>} Lista de sesiones activas
  */
-export const getActiveSessionsByProfessor = async (professorId, client = supabase) => {
+export const getActiveSessionsByProfessor = async (professorId, client) => {
+  if (!client) {
+    throw new Error('Supabase client is required');
+  }
   try {
     log(MODULE_NAME, 'Obteniendo sesiones activas del profesor', { professorId });
 
@@ -210,7 +224,10 @@ export const getActiveSessionsByProfessor = async (professorId, client = supabas
  * @param {SupabaseClient} client - Cliente de Supabase (opcional)
  * @returns {Promise<Array>} Lista de sesiones
  */
-export const getSessionHistory = async (subjectId, groupId, client = supabase) => {
+export const getSessionHistory = async (subjectId, groupId, client) => {
+  if (!client) {
+    throw new Error('Supabase client is required');
+  }
   try {
     log(MODULE_NAME, 'Obteniendo historial de sesiones', { subjectId, groupId });
 
@@ -248,7 +265,10 @@ export const getSessionHistory = async (subjectId, groupId, client = supabase) =
  * @param {SupabaseClient} client - Cliente de Supabase (opcional)
  * @returns {Promise<boolean>} True si la sesión está activa
  */
-export const isSessionActive = async (sessionId, client = supabase) => {
+export const isSessionActive = async (sessionId, client) => {
+  if (!client) {
+    throw new Error('Supabase client is required');
+  }
   try {
     const session = await getById(sessionId, client);
     
@@ -264,5 +284,164 @@ export const isSessionActive = async (sessionId, client = supabase) => {
   } catch (error) {
     logError(MODULE_NAME, 'Error al verificar si sesión está activa', error);
     return false;
+  }
+};
+
+/**
+ * Obtiene TODAS las sesiones de un profesor (ACTIVE e INACTIVE)
+ * Incluye Subject, Group y conteo de estudiantes
+ * @param {string} professorId - ID del profesor
+ * @param {SupabaseClient} client - Cliente de Supabase (opcional)
+ * @returns {Promise<Array>} Lista de sesiones con datos relacionados
+ */
+export const getAllByProfessor = async (professorId, client) => {
+  if (!client) {
+    throw new Error('Supabase client is required');
+  }
+  try {
+    log(MODULE_NAME, 'Obteniendo todas las sesiones del profesor', { professorId });
+
+    const { data, error } = await client
+      .schema(SCHEMA)
+      .from(TABLE_NAME)
+      .select(`
+        *,
+        Subject (*),
+        Group (*),
+        TakeAttendance (count)
+      `)
+      .eq('professorId', professorId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      throw error;
+    }
+
+    // Agregar conteo de estudiantes a cada sesión
+    const sessionsWithCount = data.map((session) => ({
+      ...session,
+      studentCount: session.TakeAttendance?.[0]?.count || 0,
+    }));
+
+    log(MODULE_NAME, 'Sesiones obtenidas exitosamente', {
+      count: sessionsWithCount.length,
+    });
+
+    return sessionsWithCount;
+  } catch (error) {
+    logError(MODULE_NAME, 'Error al obtener sesiones del profesor', error);
+    throw error;
+  }
+};
+
+/**
+ * Actualiza los datos de una sesión
+ * NO permite cambiar professorId ni status (usar updateStatus para eso)
+ * @param {string} sessionId - ID de la sesión
+ * @param {object} sessionData - Datos a actualizar
+ * @param {SupabaseClient} client - Cliente de Supabase (opcional)
+ * @returns {Promise<object>} Sesión actualizada
+ */
+export const update = async (sessionId, sessionData, client) => {
+  if (!client) {
+    throw new Error('Supabase client is required');
+  }
+  try {
+    log(MODULE_NAME, 'Actualizando sesión', { sessionId, sessionData });
+
+    // Validar datos (permitir campos parciales)
+    const allowedFields = [
+      'subjectId',
+      'groupId',
+      'curriculum',
+      'schoolPeriod',
+      'degree',
+      'school',
+      'institute',
+    ];
+
+    const updateData = {};
+    Object.keys(sessionData).forEach((key) => {
+      if (allowedFields.includes(key) && sessionData[key] !== undefined) {
+        updateData[key] = sessionData[key];
+      }
+    });
+
+    if (Object.keys(updateData).length === 0) {
+      throw new Error('No hay datos válidos para actualizar');
+    }
+
+    const { data, error } = await client
+      .schema(SCHEMA)
+      .from(TABLE_NAME)
+      .update(updateData)
+      .eq('id', sessionId)
+      .select(`
+        *,
+        Subject (*),
+        Group (*)
+      `)
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    log(MODULE_NAME, 'Sesión actualizada exitosamente', { sessionId });
+    return data;
+  } catch (error) {
+    logError(MODULE_NAME, 'Error al actualizar sesión', error);
+    throw error;
+  }
+};
+
+/**
+ * Elimina una sesión si no tiene estudiantes inscritos
+ * Si tiene TakeAttendance asociados, retorna error
+ * @param {string} sessionId - ID de la sesión
+ * @param {SupabaseClient} client - Cliente de Supabase (opcional)
+ * @returns {Promise<object>} Resultado de la operación
+ */
+export const removeIfEmpty = async (sessionId, client) => {
+  if (!client) {
+    throw new Error('Supabase client is required');
+  }
+  try {
+    log(MODULE_NAME, 'Intentando eliminar sesión', { sessionId });
+
+    // Verificar si tiene asistencias registradas
+    const { data: attendances, error: checkError } = await client
+      .schema(SCHEMA)
+      .from('TakeAttendance')
+      .select('id')
+      .eq('currentGroupId', sessionId)
+      .limit(1);
+
+    if (checkError) {
+      throw checkError;
+    }
+
+    if (attendances && attendances.length > 0) {
+      const errorMsg = 'No se puede eliminar grupo con estudiantes inscritos';
+      log(MODULE_NAME, errorMsg, { sessionId });
+      throw new Error(errorMsg);
+    }
+
+    // Si está vacío, eliminar
+    const { error: deleteError } = await client
+      .schema(SCHEMA)
+      .from(TABLE_NAME)
+      .delete()
+      .eq('id', sessionId);
+
+    if (deleteError) {
+      throw deleteError;
+    }
+
+    log(MODULE_NAME, 'Sesión eliminada exitosamente', { sessionId });
+    return { success: true, deleted: true };
+  } catch (error) {
+    logError(MODULE_NAME, 'Error al eliminar sesión', error);
+    throw error;
   }
 };

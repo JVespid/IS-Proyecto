@@ -1,44 +1,67 @@
 /**
  * Generador de QR Codes
- * Genera códigos QR para sesiones de pase de lista
+ * Genera códigos QR simples para sesiones de pase de lista
  */
 
 import QRCode from 'qrcode';
-import { generateSignature } from '@/lib/utils/crypto';
-import { APP_CONFIG, QR_CONFIG, ROUTES, log, logError } from '@/constants/config';
+import { APP_CONFIG, QR_CONFIG, log, logError } from '@/constants/config';
 
 const MODULE_NAME = 'QR Generator';
 
+// Configuración de tiempos
+const DEFAULT_LIFE_TIME = 15; // segundos - cada cuánto se actualiza el QR
+const DEFAULT_ACTIVE_TIME = 90; // minutos - duración total del QR
+
+/**
+ * Genera una llave aleatoria simple
+ * @returns {string} Llave de 8 caracteres
+ */
+const generateRandomKey = () => {
+  return Math.random().toString(36).substring(2, 10);
+};
+
 /**
  * Genera el payload para el QR code
- * @param {string} sessionId - ID de la sesión
- * @param {number} duration - Duración en minutos
- * @returns {object} Payload del QR con firma
+ * @param {string} sessionId - ID del CurrentGroup
+ * @param {number} iteration - Número de iteración actual
+ * @param {number} lifeTime - Tiempo de vida en segundos (default: 15)
+ * @param {number} activeTime - Tiempo de actividad en minutos (default: 90)
+ * @returns {object} Payload del QR
  */
-export const generateQRPayload = (sessionId, duration) => {
+export const generateQRPayload = (
+  sessionId, 
+  iteration = 0,
+  lifeTime = DEFAULT_LIFE_TIME,
+  activeTime = DEFAULT_ACTIVE_TIME
+) => {
   try {
     const timestamp = Date.now();
-    const expiresAt = timestamp + duration * 60 * 1000; // Convertir a milisegundos
-
-    // Datos del payload
-    const payload = {
-      sessionId,
-      timestamp,
-      expiresAt,
-    };
-
-    // Generar firma del payload
-    const signature = generateSignature(payload);
+    const randomKey = generateRandomKey();
+    
+    // Formato: groupId-lifeTime-activeTime-timestamp-iteration-randomKey
+    const rawData = `${sessionId}-${lifeTime}-${activeTime}-${timestamp}-${iteration}-${randomKey}`;
+    
+    // Codificar en base64 para que se vea diferente pero sea decodificable
+    const encodedData = Buffer.from(rawData).toString('base64');
 
     log(MODULE_NAME, 'Payload de QR generado', {
       sessionId,
-      duration,
-      expiresAt: new Date(expiresAt).toISOString(),
+      iteration,
+      lifeTime,
+      activeTime,
+      timestamp: new Date(timestamp).toISOString(),
     });
 
     return {
-      ...payload,
-      signature,
+      sessionId,
+      lifeTime,
+      activeTime,
+      timestamp,
+      iteration,
+      randomKey,
+      rawData,
+      encodedData,
+      expiresAt: timestamp + (activeTime * 60 * 1000),
     };
   } catch (error) {
     logError(MODULE_NAME, 'Error al generar payload de QR', error);
@@ -48,18 +71,14 @@ export const generateQRPayload = (sessionId, duration) => {
 
 /**
  * Genera la URL completa para el QR
- * @param {string} sessionId - ID de la sesión
- * @param {string} signature - Firma del QR
- * @param {number} timestamp - Timestamp de creación
+ * @param {string} encodedData - Datos codificados en base64
  * @returns {string} URL completa
  */
-export const generateQRUrl = (sessionId, signature, timestamp) => {
+export const generateQRUrl = (encodedData) => {
   const baseUrl = APP_CONFIG.APP_URL;
-  const url = `${baseUrl}/asistencia/${sessionId}?signature=${encodeURIComponent(
-    signature
-  )}&timestamp=${timestamp}`;
+  const url = `${baseUrl}/asistencia/scan?qr=${encodeURIComponent(encodedData)}`;
 
-  log(MODULE_NAME, 'URL de QR generada', { sessionId, url });
+  log(MODULE_NAME, 'URL de QR generada', { encodedDataLength: encodedData.length });
 
   return url;
 };
@@ -94,19 +113,26 @@ export const generateQRImage = async (url) => {
 
 /**
  * Genera un QR code completo para una sesión
- * @param {string} sessionId - ID de la sesión
- * @param {number} duration - Duración en minutos (default: 90)
+ * @param {string} sessionId - ID del CurrentGroup
+ * @param {number} iteration - Número de iteración
+ * @param {number} lifeTime - Tiempo de vida en segundos (default: 15)
+ * @param {number} activeTime - Tiempo de actividad en minutos (default: 90)
  * @returns {Promise<object>} Datos del QR generado
  */
-export const generateSessionQR = async (sessionId, duration = 90) => {
+export const generateSessionQR = async (
+  sessionId, 
+  iteration = 0,
+  lifeTime = DEFAULT_LIFE_TIME,
+  activeTime = DEFAULT_ACTIVE_TIME
+) => {
   try {
-    log(MODULE_NAME, 'Generando QR para sesión', { sessionId, duration });
+    log(MODULE_NAME, 'Generando QR para sesión', { sessionId, iteration, lifeTime, activeTime });
 
-    // Generar payload con firma
-    const payload = generateQRPayload(sessionId, duration);
+    // Generar payload
+    const payload = generateQRPayload(sessionId, iteration, lifeTime, activeTime);
 
     // Generar URL
-    const url = generateQRUrl(payload.sessionId, payload.signature, payload.timestamp);
+    const url = generateQRUrl(payload.encodedData);
 
     // Generar imagen del QR
     const qrImage = await generateQRImage(url);
@@ -117,12 +143,16 @@ export const generateSessionQR = async (sessionId, duration = 90) => {
       qrImage,
       timestamp: payload.timestamp,
       expiresAt: payload.expiresAt,
-      signature: payload.signature,
-      duration,
+      iteration: payload.iteration,
+      lifeTime: payload.lifeTime,
+      activeTime: payload.activeTime,
+      encodedData: payload.encodedData,
+      rawData: payload.rawData,
     };
 
     log(MODULE_NAME, 'QR de sesión generado exitosamente', {
       sessionId,
+      iteration,
       expiresAt: new Date(payload.expiresAt).toISOString(),
     });
 
@@ -134,25 +164,37 @@ export const generateSessionQR = async (sessionId, duration = 90) => {
 };
 
 /**
- * Genera un QR code como Buffer (para server-side)
- * @param {string} url - URL a codificar
- * @returns {Promise<Buffer>} Buffer de la imagen PNG
+ * Decodifica un QR code
+ * @param {string} encodedData - Datos codificados
+ * @returns {object} Datos decodificados
  */
-export const generateQRBuffer = async (url) => {
+export const decodeQRData = (encodedData) => {
   try {
-    log(MODULE_NAME, 'Generando QR como buffer', { urlLength: url.length });
-
-    const buffer = await QRCode.toBuffer(url, {
-      width: QR_CONFIG.SIZE,
-      margin: QR_CONFIG.MARGIN,
-      errorCorrectionLevel: QR_CONFIG.ERROR_CORRECTION,
-    });
-
-    log(MODULE_NAME, 'Buffer de QR generado exitosamente');
-
-    return buffer;
+    const rawData = Buffer.from(encodedData, 'base64').toString('utf-8');
+    const [sessionId, lifeTime, activeTime, timestamp, iteration, randomKey] = rawData.split('-');
+    
+    return {
+      sessionId,
+      lifeTime: parseInt(lifeTime),
+      activeTime: parseInt(activeTime),
+      timestamp: parseInt(timestamp),
+      iteration: parseInt(iteration),
+      randomKey,
+      rawData,
+      expiresAt: parseInt(timestamp) + (parseInt(activeTime) * 60 * 1000),
+    };
   } catch (error) {
-    logError(MODULE_NAME, 'Error al generar buffer de QR', error);
-    throw error;
+    logError(MODULE_NAME, 'Error al decodificar QR', error);
+    throw new Error('QR inválido');
   }
+};
+
+/**
+ * Valida si un QR aún está vigente
+ * @param {object} decodedData - Datos decodificados del QR
+ * @returns {boolean} True si el QR es válido
+ */
+export const isQRValid = (decodedData) => {
+  const now = Date.now();
+  return now <= decodedData.expiresAt;
 };

@@ -3,7 +3,6 @@
  * Maneja todas las operaciones relacionadas con la tabla Professors
  */
 
-import { supabase } from '@/lib/supabase/client';
 import { professorSchema } from '@/lib/utils/validators';
 import { log, logError } from '@/constants/config';
 
@@ -17,7 +16,10 @@ const SCHEMA = 'bdLista';
  * @param {SupabaseClient} client - Cliente de Supabase (opcional)
  * @returns {Promise<object|null>} Profesor encontrado o null
  */
-export const findByEmail = async (email, client = supabase) => {
+export const findByEmail = async (email, client) => {
+  if (!client) {
+    throw new Error('Supabase client is required');
+  }
   try {
     log(MODULE_NAME, 'Buscando profesor por email', { email });
 
@@ -51,7 +53,10 @@ export const findByEmail = async (email, client = supabase) => {
  * @param {SupabaseClient} client - Cliente de Supabase (opcional)
  * @returns {Promise<object|null>} Profesor encontrado o null
  */
-export const getById = async (id, client = supabase) => {
+export const getById = async (id, client) => {
+  if (!client) {
+    throw new Error('Supabase client is required');
+  }
   try {
     log(MODULE_NAME, 'Obteniendo profesor por ID', { id });
 
@@ -84,7 +89,10 @@ export const getById = async (id, client = supabase) => {
  * @param {SupabaseClient} client - Cliente de Supabase (opcional)
  * @returns {Promise<object>} Profesor creado
  */
-export const createProfessor = async (professorData, client = supabase) => {
+export const createProfessor = async (professorData, client) => {
+  if (!client) {
+    throw new Error('Supabase client is required');
+  }
   try {
     // Validar datos con Zod
     const validatedData = professorSchema.parse(professorData);
@@ -123,7 +131,10 @@ export const createProfessor = async (professorData, client = supabase) => {
  * @param {SupabaseClient} client - Cliente de Supabase (opcional)
  * @returns {Promise<object>} Profesor actualizado
  */
-export const updateProfessor = async (id, professorData, client = supabase) => {
+export const updateProfessor = async (id, professorData, client) => {
+  if (!client) {
+    throw new Error('Supabase client is required');
+  }
   try {
     log(MODULE_NAME, 'Actualizando profesor', { id });
 
@@ -153,7 +164,10 @@ export const updateProfessor = async (id, professorData, client = supabase) => {
  * @param {SupabaseClient} client - Cliente de Supabase (opcional)
  * @returns {Promise<object>} Profesor encontrado o creado
  */
-export const getOrCreateProfessor = async (professorData, client = supabase) => {
+export const getOrCreateProfessor = async (professorData, client) => {
+  if (!client) {
+    throw new Error('Supabase client is required');
+  }
   try {
     log(MODULE_NAME, 'Obteniendo o creando profesor', { email: professorData.email });
 

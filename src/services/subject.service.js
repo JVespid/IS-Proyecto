@@ -3,7 +3,6 @@
  * Maneja todas las operaciones relacionadas con la tabla Subject
  */
 
-import { supabase } from '@/lib/supabase/client';
 import { subjectSchema } from '@/lib/utils/validators';
 import { log, logError } from '@/constants/config';
 
@@ -19,7 +18,10 @@ const SCHEMA = 'bdLista';
  * @param {SupabaseClient} client - Cliente de Supabase (opcional)
  * @returns {Promise<Array>} Lista de materias únicas usadas por el profesor
  */
-export const getByProfessorId = async (professorId, client = supabase) => {
+export const getByProfessorId = async (professorId, client) => {
+  if (!client) {
+    throw new Error('Supabase client is required');
+  }
   try {
     log(MODULE_NAME, 'Obteniendo materias usadas por profesor', { professorId });
 
@@ -63,7 +65,10 @@ export const getByProfessorId = async (professorId, client = supabase) => {
  * @param {SupabaseClient} client - Cliente de Supabase (opcional)
  * @returns {Promise<object|null>} Materia encontrada o null
  */
-export const getById = async (id, client = supabase) => {
+export const getById = async (id, client) => {
+  if (!client) {
+    throw new Error('Supabase client is required');
+  }
   try {
     log(MODULE_NAME, 'Obteniendo materia por ID', { id });
 
@@ -96,7 +101,10 @@ export const getById = async (id, client = supabase) => {
  * @param {SupabaseClient} client - Cliente de Supabase (opcional)
  * @returns {Promise<Array>} Lista de todas las materias
  */
-export const getAll = async (client = supabase) => {
+export const getAll = async (client) => {
+  if (!client) {
+    throw new Error('Supabase client is required');
+  }
   try {
     log(MODULE_NAME, 'Obteniendo todas las materias');
 
@@ -125,7 +133,10 @@ export const getAll = async (client = supabase) => {
  * @param {SupabaseClient} client - Cliente de Supabase (opcional)
  * @returns {Promise<object>} Materia creada
  */
-export const create = async (subjectData, client = supabase) => {
+export const create = async (subjectData, client) => {
+  if (!client) {
+    throw new Error('Supabase client is required');
+  }
   try {
     // Validar datos con Zod
     const validatedData = subjectSchema.parse(subjectData);
@@ -164,7 +175,10 @@ export const create = async (subjectData, client = supabase) => {
  * @param {SupabaseClient} client - Cliente de Supabase (opcional)
  * @returns {Promise<object>} Materia actualizada
  */
-export const update = async (id, subjectData, client = supabase) => {
+export const update = async (id, subjectData, client) => {
+  if (!client) {
+    throw new Error('Supabase client is required');
+  }
   try {
     log(MODULE_NAME, 'Actualizando materia', { id });
 
@@ -194,7 +208,10 @@ export const update = async (id, subjectData, client = supabase) => {
  * @param {SupabaseClient} client - Cliente de Supabase (opcional)
  * @returns {Promise<boolean>} True si se eliminó correctamente
  */
-export const remove = async (id, client = supabase) => {
+export const remove = async (id, client) => {
+  if (!client) {
+    throw new Error('Supabase client is required');
+  }
   try {
     log(MODULE_NAME, 'Eliminando materia', { id });
 

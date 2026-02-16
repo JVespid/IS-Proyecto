@@ -3,7 +3,6 @@
  * Maneja todas las operaciones relacionadas con la tabla Students
  */
 
-import { supabase } from '@/lib/supabase/client';
 import { studentSchema } from '@/lib/utils/validators';
 import { generateUUID } from '@/lib/utils/crypto';
 import { log, logError } from '@/constants/config';
@@ -18,7 +17,10 @@ const SCHEMA = 'bdLista';
  * @param {SupabaseClient} client - Cliente de Supabase (opcional)
  * @returns {Promise<object|null>} Estudiante encontrado o null
  */
-export const findByReportCard = async (reportCard, client = supabase) => {
+export const findByReportCard = async (reportCard, client) => {
+  if (!client) {
+    throw new Error('Supabase client is required');
+  }
   try {
     log(MODULE_NAME, 'Buscando estudiante por boleta', { reportCard });
 
@@ -51,7 +53,10 @@ export const findByReportCard = async (reportCard, client = supabase) => {
  * @param {SupabaseClient} client - Cliente de Supabase (opcional)
  * @returns {Promise<object|null>} Estudiante encontrado o null
  */
-export const getById = async (id, client = supabase) => {
+export const getById = async (id, client) => {
+  if (!client) {
+    throw new Error('Supabase client is required');
+  }
   try {
     log(MODULE_NAME, 'Obteniendo estudiante por ID', { id });
 
@@ -85,7 +90,10 @@ export const getById = async (id, client = supabase) => {
  * @param {SupabaseClient} client - Cliente de Supabase (opcional)
  * @returns {Promise<object>} Estudiante creado
  */
-export const createStudent = async (fullName, reportCard, client = supabase) => {
+export const createStudent = async (fullName, reportCard, client) => {
+  if (!client) {
+    throw new Error('Supabase client is required');
+  }
   try {
     // Generar UUID manualmente ya que no se auto-genera en el schema
     const studentId = generateUUID();
@@ -134,7 +142,10 @@ export const createStudent = async (fullName, reportCard, client = supabase) => 
  * @param {SupabaseClient} client - Cliente de Supabase (opcional)
  * @returns {Promise<object>} Estudiante encontrado o creado
  */
-export const getOrCreateStudent = async (fullName, reportCard, client = supabase) => {
+export const getOrCreateStudent = async (fullName, reportCard, client) => {
+  if (!client) {
+    throw new Error('Supabase client is required');
+  }
   try {
     log(MODULE_NAME, 'Obteniendo o creando estudiante', { reportCard });
 
@@ -161,7 +172,10 @@ export const getOrCreateStudent = async (fullName, reportCard, client = supabase
  * @param {SupabaseClient} client - Cliente de Supabase (opcional)
  * @returns {Promise<object>} Estudiante actualizado
  */
-export const updateStudent = async (id, studentData, client = supabase) => {
+export const updateStudent = async (id, studentData, client) => {
+  if (!client) {
+    throw new Error('Supabase client is required');
+  }
   try {
     log(MODULE_NAME, 'Actualizando estudiante', { id });
 

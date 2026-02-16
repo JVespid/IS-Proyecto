@@ -3,7 +3,6 @@
  * Maneja todas las operaciones relacionadas con la tabla Group
  */
 
-import { supabase } from '@/lib/supabase/client';
 import { groupSchema } from '@/lib/utils/validators';
 import { log, logError } from '@/constants/config';
 
@@ -16,7 +15,10 @@ const SCHEMA = 'bdLista';
  * @param {SupabaseClient} client - Cliente de Supabase (opcional)
  * @returns {Promise<Array>} Lista de grupos
  */
-export const getAll = async (client = supabase) => {
+export const getAll = async (client) => {
+  if (!client) {
+    throw new Error('Supabase client is required');
+  }
   try {
     log(MODULE_NAME, 'Obteniendo todos los grupos');
 
@@ -44,7 +46,10 @@ export const getAll = async (client = supabase) => {
  * @param {SupabaseClient} client - Cliente de Supabase (opcional)
  * @returns {Promise<object|null>} Grupo encontrado o null
  */
-export const getById = async (id, client = supabase) => {
+export const getById = async (id, client) => {
+  if (!client) {
+    throw new Error('Supabase client is required');
+  }
   try {
     log(MODULE_NAME, 'Obteniendo grupo por ID', { id });
 
@@ -77,7 +82,10 @@ export const getById = async (id, client = supabase) => {
  * @param {SupabaseClient} client - Cliente de Supabase (opcional)
  * @returns {Promise<object>} Grupo creado
  */
-export const create = async (groupName, client = supabase) => {
+export const create = async (groupName, client) => {
+  if (!client) {
+    throw new Error('Supabase client is required');
+  }
   try {
     // Validar datos con Zod
     const validatedData = groupSchema.parse({ group: groupName });
@@ -109,7 +117,10 @@ export const create = async (groupName, client = supabase) => {
  * @param {SupabaseClient} client - Cliente de Supabase (opcional)
  * @returns {Promise<object|null>} Grupo encontrado o null
  */
-export const findByName = async (groupName, client = supabase) => {
+export const findByName = async (groupName, client) => {
+  if (!client) {
+    throw new Error('Supabase client is required');
+  }
   try {
     log(MODULE_NAME, 'Buscando grupo por nombre', { group: groupName });
 
@@ -143,7 +154,10 @@ export const findByName = async (groupName, client = supabase) => {
  * @param {SupabaseClient} client - Cliente de Supabase (opcional)
  * @returns {Promise<object>} Grupo actualizado
  */
-export const update = async (id, groupName, client = supabase) => {
+export const update = async (id, groupName, client) => {
+  if (!client) {
+    throw new Error('Supabase client is required');
+  }
   try {
     log(MODULE_NAME, 'Actualizando grupo', { id, group: groupName });
 
@@ -173,7 +187,10 @@ export const update = async (id, groupName, client = supabase) => {
  * @param {SupabaseClient} client - Cliente de Supabase (opcional)
  * @returns {Promise<boolean>} True si se eliminó correctamente
  */
-export const remove = async (id, client = supabase) => {
+export const remove = async (id, client) => {
+  if (!client) {
+    throw new Error('Supabase client is required');
+  }
   try {
     log(MODULE_NAME, 'Eliminando grupo', { id });
 

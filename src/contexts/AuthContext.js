@@ -39,7 +39,7 @@ export const AuthProvider = ({ children }) => {
         email: authUser.email,
       });
 
-      const prof = await findByEmail(authUser.email);
+      const prof = await findByEmail(authUser.email, supabase);
       
       if (prof) {
         setProfessor(prof);
@@ -167,7 +167,7 @@ export const AuthProvider = ({ children }) => {
       log(MODULE_NAME, 'Usuario de auth creado', { userId: authData.user.id });
 
       // Crear registro en tabla Professors
-      const professorData = await createProfessor({ name, lastName, email });
+      const professorData = await createProfessor({ name, lastName, email }, supabase);
 
       log(MODULE_NAME, 'Profesor registrado exitosamente', {
         professorId: professorData.id,

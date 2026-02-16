@@ -3,7 +3,6 @@
  * Maneja todas las operaciones relacionadas con la tabla TakeAttendance
  */
 
-import { supabase } from '@/lib/supabase/client';
 import { attendanceSchema } from '@/lib/utils/validators';
 import { log, logError } from '@/constants/config';
 
@@ -25,8 +24,11 @@ export const recordAttendance = async (
   currentGroupId,
   studentData,
   numberOfList = null,
-  client = supabase
+  client
 ) => {
+  if (!client) {
+    throw new Error('Supabase client is required');
+  }
   try {
     // Crear objeto de datos completo para el JSON
     const attendanceData = {
@@ -88,7 +90,10 @@ export const recordAttendance = async (
  * @param {SupabaseClient} client - Cliente de Supabase (opcional)
  * @returns {Promise<boolean>} True si ya pasó lista
  */
-export const checkDuplicate = async (studentId, currentGroupId, client = supabase) => {
+export const checkDuplicate = async (studentId, currentGroupId, client) => {
+  if (!client) {
+    throw new Error('Supabase client is required');
+  }
   try {
     log(MODULE_NAME, 'Verificando duplicado de asistencia', {
       studentId,
@@ -127,7 +132,10 @@ export const checkDuplicate = async (studentId, currentGroupId, client = supabas
  * @param {SupabaseClient} client - Cliente de Supabase (opcional)
  * @returns {Promise<Array>} Lista de asistencias
  */
-export const getBySession = async (currentGroupId, client = supabase) => {
+export const getBySession = async (currentGroupId, client) => {
+  if (!client) {
+    throw new Error('Supabase client is required');
+  }
   try {
     log(MODULE_NAME, 'Obteniendo asistencias de sesión', { currentGroupId });
 
@@ -162,7 +170,10 @@ export const getBySession = async (currentGroupId, client = supabase) => {
  * @param {SupabaseClient} client - Cliente de Supabase (opcional)
  * @returns {Promise<Array>} Lista de asistencias
  */
-export const getByStudent = async (studentId, client = supabase) => {
+export const getByStudent = async (studentId, client) => {
+  if (!client) {
+    throw new Error('Supabase client is required');
+  }
   try {
     log(MODULE_NAME, 'Obteniendo historial de asistencias del estudiante', {
       studentId,
@@ -203,7 +214,10 @@ export const getByStudent = async (studentId, client = supabase) => {
  * @param {SupabaseClient} client - Cliente de Supabase (opcional)
  * @returns {Promise<object>} Estadísticas de asistencia
  */
-export const getSessionStats = async (currentGroupId, client = supabase) => {
+export const getSessionStats = async (currentGroupId, client) => {
+  if (!client) {
+    throw new Error('Supabase client is required');
+  }
   try {
     log(MODULE_NAME, 'Obteniendo estadísticas de sesión', { currentGroupId });
 
@@ -231,7 +245,10 @@ export const getSessionStats = async (currentGroupId, client = supabase) => {
  * @param {SupabaseClient} client - Cliente de Supabase (opcional)
  * @returns {Promise<boolean>} True si se eliminó correctamente
  */
-export const remove = async (attendanceId, client = supabase) => {
+export const remove = async (attendanceId, client) => {
+  if (!client) {
+    throw new Error('Supabase client is required');
+  }
   try {
     log(MODULE_NAME, 'Eliminando asistencia', { attendanceId });
 
