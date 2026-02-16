@@ -5,7 +5,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import Button from '@/components/ui/Button';
@@ -14,7 +14,7 @@ import QRGenerator from '@/components/qr/QRGenerator';
 import { getById } from '@/services/session.service';
 import { createClient } from '@/lib/supabase/client';
 
-export default function QRPage() {
+function QRPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, loading: authLoading } = useAuth();
@@ -187,5 +187,17 @@ export default function QRPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function QRPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-green-400 to-green-300">
+        <Spinner size="lg" />
+      </div>
+    }>
+      <QRPageContent />
+    </Suspense>
   );
 }

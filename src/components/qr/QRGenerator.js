@@ -108,7 +108,7 @@ export default function QRGenerator({
     <Card title="Código QR de Asistencia" className="text-center">
       <div className="mb-4">
         {isExpired ? (
-          <div className="flex flex-col items-center justify-center min-h-[300px] bg-gray-100 border-4 border-red-300 rounded p-8">
+          <div className="flex flex-col items-center justify-center min-h-75 bg-gray-100 border-4 border-red-300 rounded p-8">
             <svg 
               className="w-20 h-20 text-red-500 mb-4" 
               fill="none" 
