@@ -5,16 +5,21 @@
 
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 
 export default function LogoutPage() {
   const router = useRouter();
   const { logout } = useAuth();
+  const isLoggingOut = useRef(false);
 
   useEffect(() => {
     const handleLogout = async () => {
+      // Evitar ejecuciones múltiples
+      if (isLoggingOut.current) return;
+      isLoggingOut.current = true;
+
       const result = await logout();
       
       if (result.success) {

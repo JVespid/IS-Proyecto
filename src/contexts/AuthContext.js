@@ -5,7 +5,7 @@
 
 'use client';
 
-import { createContext, useState, useEffect } from 'react';
+import { createContext, useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import { findByEmail, createProfessor } from '@/services/professor.service';
 import { log, logError } from '@/constants/config';
@@ -87,7 +87,7 @@ export const AuthProvider = ({ children }) => {
    * @param {string} email - Email del profesor
    * @param {string} password - Contraseña
    */
-  const login = async (email, password) => {
+  const login = useCallback(async (email, password) => {
     try {
       log(MODULE_NAME, 'Iniciando sesión', { email });
 
@@ -117,12 +117,12 @@ export const AuthProvider = ({ children }) => {
 
       return { success: false, error: message };
     }
-  };
+  }, []);
 
   /**
    * Cerrar sesión
    */
-  const logout = async () => {
+  const logout = useCallback(async () => {
     try {
       log(MODULE_NAME, 'Cerrando sesión');
 
@@ -138,13 +138,13 @@ export const AuthProvider = ({ children }) => {
       logError(MODULE_NAME, 'Error al cerrar sesión', error);
       return { success: false, error: 'Error al cerrar sesión' };
     }
-  };
+  }, []);
 
   /**
    * Registrar nuevo profesor
    * @param {object} data - Datos del registro
    */
-  const register = async ({ name, lastName, email, password }) => {
+  const register = useCallback(async ({ name, lastName, email, password }) => {
     try {
       log(MODULE_NAME, 'Registrando nuevo profesor', { email });
 
@@ -190,7 +190,7 @@ export const AuthProvider = ({ children }) => {
 
       return { success: false, error: message };
     }
-  };
+  }, []);
 
   const value = {
     user,

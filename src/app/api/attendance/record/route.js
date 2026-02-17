@@ -4,7 +4,7 @@
  */
 
 import { NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { recordAttendance, checkDuplicate } from '@/services/attendance.service';
 import { getOrCreateStudent } from '@/services/student.service';
 import { isSessionActive } from '@/services/session.service';
@@ -30,7 +30,8 @@ export async function POST(request) {
     });
 
     // Verificar que la sesión esté activa
-    const supabase = await createServerClient();
+    // Usamos cliente admin para acceso sin restricciones RLS en operaciones de QR
+    const supabase = createAdminClient();
     const sessionActive = await isSessionActive(validatedData.sessionId, supabase);
 
     if (!sessionActive) {

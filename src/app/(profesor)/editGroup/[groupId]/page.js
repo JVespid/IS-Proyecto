@@ -24,16 +24,27 @@ export default function EditGroupPage({ params }) {
     async function loadGroup() {
       try {
         const supabase = createClient();
+        
+        // Verificar usuario autenticado
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          throw new Error('No autenticado');
+        }
+
         const groupData = await getById(groupId, supabase);
         
+        // RLS retorna null si no tiene permiso o no existe
         if (!groupData) {
-          throw new Error('Grupo no encontrado');
+          throw new Error('Grupo no encontrado o sin permisos');
         }
         
         setInitialData(groupData);
       } catch (err) {
         console.error('Error al cargar grupo:', err);
-        setError('Error al cargar el grupo. Redirigiendo...');
+        const message = err.message.includes('sin permisos') 
+          ? 'No tienes permisos para editar este grupo'
+          : 'Error al cargar el grupo';
+        setError(`${message}. Redirigiendo...`);
         setTimeout(() => router.push('/'), 2000);
       } finally {
         setLoading(false);

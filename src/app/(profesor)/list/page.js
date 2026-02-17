@@ -71,11 +71,36 @@ function ListContent() {
         if (queryError) {
           logError(MODULE_NAME, "Error en query", queryError);
           console.error("❌ Error Supabase:", queryError);
+          
+          // Si el error es de permisos RLS (código 42501)
+          if (queryError.code === '42501') {
+            throw new Error('No tienes permisos para ver esta lista de asistencia');
+          }
+          
           throw queryError;
         }
 
         console.log("📊 Datos obtenidos:", data);
         console.log("📊 Cantidad de registros:", data?.length);
+
+        // Si no hay datos, verificar si es por falta de permisos o realmente no hay registros
+        if (!data || data.length === 0) {
+          // Verificar si el grupo existe y tenemos permisos
+          const { data: groupCheck, error: groupError } = await supabase
+            .schema("bdLista")
+            .from("CurrentGroup")
+            .select("id, professorId")
+            .eq("id", currentGroupId)
+            .single();
+            
+          // Si no podemos leer el grupo, no tenemos permisos
+          if (groupError || !groupCheck) {
+            throw new Error('No tienes permisos para ver este grupo o no existe');
+          }
+          
+          // Si llegamos aquí, tenemos permisos pero no hay asistencias todavía
+          console.log("✓ Grupo válido, sin asistencias registradas aún");
+        }
 
         // Ordenar por número de lista (numéricamente)
         const sortedData = (data || []).sort((a, b) => {

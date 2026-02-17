@@ -4,7 +4,7 @@
  */
 
 import { NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { getById, isSessionActive } from '@/services/session.service';
 import { validateQRCode } from '@/lib/qr/validator';
 import { SESSION_DURATION, log, logError } from '@/constants/config';
@@ -52,7 +52,8 @@ export async function GET(request) {
     }
 
     // Verificar que la sesión existe y está activa en la BD
-    const supabase = await createServerClient();
+    // Usamos cliente admin para bypass RLS (la validación de QR no depende del usuario)
+    const supabase = createAdminClient();
     const sessionActive = await isSessionActive(sessionId, supabase);
 
     if (!sessionActive) {
