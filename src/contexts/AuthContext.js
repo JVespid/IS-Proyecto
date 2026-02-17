@@ -121,22 +121,23 @@ export const AuthProvider = ({ children }) => {
 
   /**
    * Cerrar sesión
+   * Siempre retorna success porque si la sesión no existe, es OK
    */
   const logout = useCallback(async () => {
     try {
       log(MODULE_NAME, 'Cerrando sesión');
 
-      const { error } = await supabase.auth.signOut();
-
-      if (error) {
-        throw error;
-      }
+      // Intentar cerrar sesión en Supabase
+      // Ignoramos errores porque la sesión podría no existir
+      await supabase.auth.signOut();
 
       log(MODULE_NAME, 'Sesión cerrada exitosamente');
       return { success: true };
     } catch (error) {
-      logError(MODULE_NAME, 'Error al cerrar sesión', error);
-      return { success: false, error: 'Error al cerrar sesión' };
+      // Log del error pero retornamos success de todos modos
+      // porque el estado local se limpiará con onAuthStateChange
+      log(MODULE_NAME, 'Advertencia al cerrar sesión (ignorado)', error);
+      return { success: true };
     }
   }, []);
 
