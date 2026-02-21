@@ -73,7 +73,7 @@ export default function Autocomplete({
     setIsOpen(true);
     setHighlightedIndex(-1);
     
-    // Si el usuario escribe libremente, actualizar el value con el texto
+    // Actualizar el value con el texto ingresado (puede ser UUID o texto libre)
     onChange(newValue);
   };
 
@@ -83,6 +83,11 @@ export default function Autocomplete({
     onChange(option.value);
     setIsOpen(false);
     inputRef.current?.focus();
+  };
+
+  // Manejar pérdida de foco
+  const handleBlur = () => {
+    setIsOpen(false);
   };
 
   // Manejar navegación con teclado
@@ -148,6 +153,7 @@ export default function Autocomplete({
         onChange={handleInputChange}
         onKeyDown={handleKeyDown}
         onFocus={handleFocus}
+        onBlur={handleBlur}
         placeholder={placeholder}
         className={baseInputClasses}
         autoComplete="off"
@@ -160,7 +166,10 @@ export default function Autocomplete({
           {filteredOptions.map((option, index) => (
             <div
               key={option.value}
-              onClick={() => handleSelectOption(option)}
+              onMouseDown={(e) => {
+                e.preventDefault(); // Prevenir que el input pierda el foco
+                handleSelectOption(option);
+              }}
               className={`px-4 py-2 cursor-pointer ${
                 index === highlightedIndex
                   ? 'bg-blue-100 text-blue-900'

@@ -1,6 +1,7 @@
 /**
  * Página Editar Grupo
  * Renderiza el formulario de grupo en modo edición con datos pre-cargados
+ * La autenticación es manejada por el middleware
  */
 
 'use client';
@@ -25,12 +26,6 @@ export default function EditGroupPage({ params }) {
       try {
         const supabase = createClient();
         
-        // Verificar usuario autenticado
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) {
-          throw new Error('No autenticado');
-        }
-
         const groupData = await getById(groupId, supabase);
         
         // RLS retorna null si no tiene permiso o no existe
@@ -54,17 +49,17 @@ export default function EditGroupPage({ params }) {
     if (groupId) {
       loadGroup();
     }
-  }, [groupId, router]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [groupId]); // Removido 'router' para evitar re-renders
 
   const handleSuccess = (groupId) => {
-    // Cuando se implemente el botón de guardar, esto redirigirá al dashboard
     console.log('Grupo actualizado exitosamente:', groupId);
-    // router.push('/');
+    router.push('/');
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-green-400 to-green-300">
+      <div className="min-h-screen flex items-center justify-center bg-[#CCFED9]">
         <Spinner size="lg" />
       </div>
     );
@@ -72,8 +67,8 @@ export default function EditGroupPage({ params }) {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-green-400 to-green-300">
-        <div className="bg-white p-8 rounded-lg shadow-lg">
+      <div className="min-h-screen flex items-center justify-center bg-[#CCFED9]">
+        <div className="bg-white p-8 rounded-lg shadow-[4px_4px_0px_rgba(0,0,0,1)] border-2 border-black">
           <p className="text-red-600 font-semibold">{error}</p>
         </div>
       </div>

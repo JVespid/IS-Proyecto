@@ -228,3 +228,67 @@ export const remove = async (id, client) => {
     throw error;
   }
 };
+
+/**
+ * Busca una materia por nombre (campo Subject)
+ * @param {string} subjectName - Nombre de la materia
+ * @param {SupabaseClient} client - Cliente de Supabase
+ * @returns {Promise<object|null>} Materia encontrada o null
+ */
+export const findBySubjectName = async (subjectName, client) => {
+  if (!client) {
+    throw new Error('Supabase client is required');
+  }
+  try {
+    log(MODULE_NAME, 'Buscando materia por nombre', { subject: subjectName });
+
+    const { data, error } = await client
+      .schema(SCHEMA)
+      .from(TABLE_NAME)
+      .select('*')
+      .eq('Subject', subjectName)
+      .maybeSingle();
+
+    if (error) {
+      throw error;
+    }
+
+    if (data) {
+      log(MODULE_NAME, 'Materia encontrada', { subjectId: data.id });
+    } else {
+      log(MODULE_NAME, 'Materia no encontrada', { subject: subjectName });
+    }
+
+    return data;
+  } catch (error) {
+    logError(MODULE_NAME, 'Error al buscar materia por nombre', error);
+    throw error;
+  }
+};
+
+/**
+ * Busca una materia por nombre, o la crea si no existe
+ * @param {string} subjectName - Nombre de la materia
+ * @param {SupabaseClient} client - Cliente de Supabase
+ * @returns {Promise<object>} Materia encontrada o creada
+ */
+export const getOrCreate = async (subjectName, client) => {
+  if (!client) {
+    throw new Error('Supabase client is required');
+  }
+  try {
+    // Primero buscar
+    const existing = await findBySubjectName(subjectName, client);
+    
+    if (existing) {
+      return existing;
+    }
+
+    // Si no existe, crear
+    log(MODULE_NAME, 'Materia no existe, creando nueva', { subject: subjectName });
+    return await create({ Subject: subjectName }, client);
+  } catch (error) {
+    logError(MODULE_NAME, 'Error al obtener o crear materia', error);
+    throw error;
+  }
+};

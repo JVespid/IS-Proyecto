@@ -207,3 +207,30 @@ export const remove = async (id, client) => {
     throw error;
   }
 };
+
+/**
+ * Busca un grupo por nombre, o lo crea si no existe
+ * @param {string} groupName - Nombre del grupo
+ * @param {SupabaseClient} client - Cliente de Supabase
+ * @returns {Promise<object>} Grupo encontrado o creado
+ */
+export const getOrCreate = async (groupName, client) => {
+  if (!client) {
+    throw new Error('Supabase client is required');
+  }
+  try {
+    // Primero buscar
+    const existing = await findByName(groupName, client);
+    
+    if (existing) {
+      return existing;
+    }
+
+    // Si no existe, crear
+    log(MODULE_NAME, 'Grupo no existe, creando nuevo', { group: groupName });
+    return await create(groupName, client);
+  } catch (error) {
+    logError(MODULE_NAME, 'Error al obtener o crear grupo', error);
+    throw error;
+  }
+};

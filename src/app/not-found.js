@@ -20,7 +20,8 @@ export default function NotFound() {
       const redirectTo = user ? '/' : '/login';
       router.push(redirectTo);
     }
-  }, [user, loading, router]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, loading]);
 
   if (loading) {
     return (

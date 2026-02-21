@@ -8,7 +8,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { generateSessionQR } from '@/lib/qr/generator';
 import Spinner from '@/components/ui/Spinner';
-import Card from '@/components/ui/Card';
 
 export default function QRGenerator({ 
   sessionId, 
@@ -19,16 +18,11 @@ export default function QRGenerator({
   const [qrData, setQrData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [isMounted, setIsMounted] = useState(false);
   const [iteration, setIteration] = useState(0);
   const intervalRef = useRef(null);
 
   // Calcular iteraciones máximas: (activeTime * 60) / lifeTime
   const maxIterations = Math.floor((activeTime * 60) / lifeTime);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
 
   // Función para generar QR
   const generateQR = async (currentIteration) => {
@@ -85,92 +79,50 @@ export default function QRGenerator({
 
   if (loading && !qrData) {
     return (
-      <Card className="flex items-center justify-center p-8">
+      <div className="flex items-center justify-center w-full h-full">
         <Spinner size="lg" />
-      </Card>
+      </div>
     );
   }
 
   if (error && !qrData) {
     return (
-      <Card className="text-center">
+      <div className="text-center w-full">
         <p className="text-red-600">{error}</p>
-      </Card>
+      </div>
     );
   }
 
   if (!qrData) return null;
 
-  const expiresDate = new Date(qrData.expiresAt);
   const isExpired = iteration >= maxIterations;
 
   return (
-    <Card title="Código QR de Asistencia" className="text-center">
-      <div className="mb-4">
-        {isExpired ? (
-          <div className="flex flex-col items-center justify-center min-h-75 bg-gray-100 border-4 border-red-300 rounded p-8">
-            <svg 
-              className="w-20 h-20 text-red-500 mb-4" 
-              fill="none" 
-              stroke="currentColor" 
-              viewBox="0 0 24 24"
-            >
-              <path 
-                strokeLinecap="round" 
-                strokeLinejoin="round" 
-                strokeWidth={2} 
-                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" 
-              />
-            </svg>
-            <h2 className="text-3xl font-bold text-red-600 mb-2">QR EXPIRADO</h2>
-            <p className="text-gray-600">El tiempo de vida del código QR ha terminado</p>
-          </div>
-        ) : (
-          <img
-            src={qrData.qrImage}
-            alt="QR Code"
-            className="mx-auto border-4 border-gray-200 rounded"
-          />
-        )}
-      </div>
-      
-      <div className="text-sm text-gray-600 space-y-1">
-        <p>
-          <strong>Iteración:</strong> {iteration + 1} / {maxIterations}
-          {isExpired && <span className="text-red-600 ml-2">(Expirado)</span>}
-        </p>
-        <p><strong>Actualización cada:</strong> {lifeTime} segundos</p>
-        <p><strong>Duración total:</strong> {activeTime} minutos</p>
-        {isMounted && <p><strong>Expira:</strong> {expiresDate.toLocaleTimeString()}</p>}
-      </div>
-
-      {/* URL del QR */}
-      <div className="mt-4 p-2 bg-gray-100 rounded text-xs break-all">
-        <strong>URL:</strong> {qrData.url}
-      </div>
-
-      {/* Datos para debug */}
-      <details className="mt-4 text-left">
-        <summary className="cursor-pointer text-sm text-gray-600 hover:text-gray-800">
-          Ver datos técnicos
-        </summary>
-        <div className="mt-2 p-3 bg-gray-50 rounded text-xs space-y-2">
-          <div>
-            <strong>Datos Raw:</strong>
-            <pre className="mt-1 p-2 bg-white rounded overflow-x-auto">{qrData.rawData}</pre>
-          </div>
-          <div>
-            <strong>Datos Codificados (Base64):</strong>
-            <pre className="mt-1 p-2 bg-white rounded overflow-x-auto break-all">{qrData.encodedData}</pre>
-          </div>
-          <div>
-            <strong>Session ID:</strong> {qrData.sessionId}
-          </div>
-          <div>
-            <strong>Timestamp:</strong> {new Date(qrData.timestamp).toISOString()}
-          </div>
+    <div className="w-full h-full flex items-center justify-center">
+      {isExpired ? (
+        <div className="flex flex-col items-center justify-center w-full h-full bg-gray-100 p-4">
+          <svg 
+            className="w-16 h-16 text-red-500 mb-2" 
+            fill="none" 
+            stroke="currentColor" 
+            viewBox="0 0 24 24"
+          >
+            <path 
+              strokeLinecap="round" 
+              strokeLinejoin="round" 
+              strokeWidth={2} 
+              d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" 
+            />
+          </svg>
+          <h2 className="text-xl font-bold text-red-600 mb-1">QR EXPIRADO</h2>
         </div>
-      </details>
-    </Card>
+      ) : (
+        <img
+          src={qrData.qrImage}
+          alt="QR Code"
+          className="w-full h-full object-contain"
+        />
+      )}
+    </div>
   );
 }

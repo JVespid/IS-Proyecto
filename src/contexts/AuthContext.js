@@ -6,7 +6,7 @@
 'use client';
 
 import { createContext, useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/lib/supabase/client';
+import { createClient } from '@/lib/supabase/client';
 import { findByEmail, createProfessor } from '@/services/professor.service';
 import { log, logError } from '@/constants/config';
 
@@ -22,6 +22,7 @@ export const AuthContext = createContext({
 });
 
 export const AuthProvider = ({ children }) => {
+  const supabase = createClient();
   const [user, setUser] = useState(null);
   const [professor, setProfessor] = useState(null);
   const [loading, setLoading] = useState(true);

@@ -13,8 +13,8 @@ import Button from '@/components/ui/Button';
 import Table from '@/components/ui/Table';
 import Spinner from '@/components/ui/Spinner';
 import { createClient } from '@/lib/supabase/client';
-import { getAll as getAllSubjects } from '@/services/subject.service';
-import { getAll as getAllGroups } from '@/services/group.service';
+import { getAll as getAllSubjects, getOrCreate as getOrCreateSubject } from '@/services/subject.service';
+import { getAll as getAllGroups, getOrCreate as getOrCreateGroup } from '@/services/group.service';
 import { createSession, update as updateSession } from '@/services/session.service';
 import { getOrCreateStudent } from '@/services/student.service';
 import { recordAttendance, remove as removeAttendance, getBySession } from '@/services/attendance.service';
@@ -81,6 +81,8 @@ export default function GroupForm({
           
           // Cargar estudiantes inscritos
           const attendances = await getBySession(initialData.id, supabase);
+          console.log('Attendances cargadas:', attendances);
+          
           const studentsData = attendances.map((att, index) => ({
             id: att.id, // ID de TakeAttendance para eliminar
             studentId: att.Students?.id,
@@ -88,6 +90,8 @@ export default function GroupForm({
             nombre: att.Students?.fullName || 'Sin nombre',
             tempId: index,
           }));
+          
+          console.log('Estudiantes mapeados:', studentsData);
           setStudents(studentsData);
         }
       } catch (err) {
@@ -108,6 +112,42 @@ export default function GroupForm({
   };
 
   /**
+   * Helper: Verificar si un valor es UUID o texto libre
+   * Y obtener/crear el registro de Subject correspondiente
+   */
+  const resolveSubjectId = async (value, supabase) => {
+    // Si es UUID válido, retornar directamente
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (uuidRegex.test(value)) {
+      return value;
+    }
+
+    // Si es texto, buscar o crear Subject
+    console.log('Subject es texto libre, buscando o creando:', value);
+    const subject = await getOrCreateSubject(value, supabase);
+    console.log('Subject resuelto:', subject);
+    return subject.id;
+  };
+
+  /**
+   * Helper: Verificar si un valor es UUID o texto libre
+   * Y obtener/crear el registro de Group correspondiente
+   */
+  const resolveGroupId = async (value, supabase) => {
+    // Si es UUID válido, retornar directamente
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (uuidRegex.test(value)) {
+      return value;
+    }
+
+    // Si es texto, buscar o crear Group
+    console.log('Group es texto libre, buscando o creando:', value);
+    const group = await getOrCreateGroup(value, supabase);
+    console.log('Group resuelto:', group);
+    return group.id;
+  };
+
+  /**
    * FUNCIÓN LISTA PARA USAR: Guardar grupo
    * Crea o actualiza CurrentGroup en la BD
    */
@@ -117,7 +157,7 @@ export default function GroupForm({
       setError('');
       
       const supabase = createClient();
-      const { user } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
         throw new Error('Usuario no autenticado');
@@ -127,6 +167,12 @@ export default function GroupForm({
       if (!formData.subjectId || !formData.groupId) {
         throw new Error('Materia y Grupo son obligatorios');
       }
+
+      // Resolver subjectId y groupId (crear si es necesario)
+      const resolvedSubjectId = await resolveSubjectId(formData.subjectId, supabase);
+      const resolvedGroupId = await resolveGroupId(formData.groupId, supabase);
+
+      console.log('IDs resueltos:', { resolvedSubjectId, resolvedGroupId });
 
       let groupId;
 
@@ -145,8 +191,8 @@ export default function GroupForm({
         }
 
         const newGroup = await createSession(
-          formData.subjectId,
-          formData.groupId,
+          resolvedSubjectId,
+          resolvedGroupId,
           professorData.id,
           {
             curriculum: formData.curriculum,
@@ -164,8 +210,8 @@ export default function GroupForm({
         await updateSession(
           currentGroupId,
           {
-            subjectId: formData.subjectId,
-            groupId: formData.groupId,
+            subjectId: resolvedSubjectId,
+            groupId: resolvedGroupId,
             curriculum: formData.curriculum,
             schoolPeriod: formData.schoolPeriod,
             degree: formData.degree,
@@ -240,14 +286,24 @@ export default function GroupForm({
    */
   const handleRemoveStudent = async (attendanceId) => {
     try {
+      if (!attendanceId) {
+        console.error('Error: attendanceId es undefined o null');
+        setError('Error: No se puede eliminar el estudiante (ID inválido)');
+        return;
+      }
+
+      console.log('Eliminando estudiante con attendanceId:', attendanceId);
+      
       const supabase = createClient();
       await removeAttendance(attendanceId, supabase);
+      
+      console.log('Estudiante eliminado exitosamente');
       
       // Actualizar lista local
       setStudents((prev) => prev.filter((s) => s.id !== attendanceId));
     } catch (err) {
       console.error('Error al eliminar estudiante:', err);
-      alert('Error al eliminar el estudiante');
+      setError(`Error al eliminar el estudiante: ${err.message}`);
     }
   };
 
@@ -293,193 +349,244 @@ export default function GroupForm({
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-green-400 to-green-300">
+      <div className="min-h-screen flex items-center justify-center bg-[#CCFED9]">
         <Spinner size="lg" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-green-400 to-green-300 p-8">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-6">
+    <div className="min-h-screen bg-[#CCFED9] p-8 flex items-center justify-center overflow-hidden">
+      <div className="w-full max-w-6xl h-[85vh] bg-[#EEFEF1] border-2 border-black rounded-[30px] shadow-[8px_8px_0px_rgba(0,0,0,1)] relative flex flex-col pt-20 px-12 pb-12">
+        
+        {/* Botón Atrás */}
+        <div className="absolute top-8 left-8">
           <Button
-            variant="outline"
             onClick={() => router.push('/')}
-            className="mb-4 bg-white hover:bg-gray-50"
+            className="bg-[#D9D9D9] border-2 border-black rounded-[5px] w-12 h-12 flex items-center justify-center shadow-[4px_4px_0px_rgba(0,0,0,1)] hover:bg-gray-300 active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0px_rgba(0,0,0,1)] transition-all"
+            unstyled={true}
           >
-            ← Volver
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+               <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="black" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
           </Button>
-          <h1 className="text-3xl font-bold text-white drop-shadow-lg">
-            {mode === 'create' ? 'Crear Grupo' : 'Editar Grupo'}
-          </h1>
+        </div>
+
+        {/* Botón Guardar datos */}
+        <div className="absolute top-8 right-8">
+          <Button
+            onClick={handleSaveGroup}
+            disabled={saving}
+            className="bg-[#8B80F9] text-white border-2 border-black rounded-full px-6 py-2 flex items-center gap-2 shadow-[4px_4px_0px_rgba(0,0,0,1)] hover:bg-[#7a6ee6] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0px_rgba(0,0,0,1)] transition-all font-bold text-lg"
+            unstyled={true}
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H16L21 8V19C21 19.5304 20.7893 21 20.4142 21H19ZM19 21V14H5V21M15 3V8H9V3" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            {saving ? 'Guardando...' : 'Guardar datos'}
+          </Button>
         </div>
 
         {error && (
-          <div className="mb-4 p-4 bg-red-100 text-red-700 rounded-lg">
+          <div className="absolute top-24 left-1/2 transform -translate-x-1/2 bg-red-100 border-2 border-red-500 text-red-700 px-4 py-2 rounded-lg shadow-[4px_4px_0px_rgba(0,0,0,1)] z-50">
             {error}
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="flex-1 flex gap-12 mt-4 overflow-hidden">
           {/* Panel izquierdo: Formulario */}
-          <div className="bg-linear-to-br from-blue-50 to-white rounded-2xl shadow-2xl border-2 border-blue-200 p-8">
-            <div className="space-y-6">
-              {/* Grupo */}
-              <div>
-                <label className="block text-base font-semibold text-gray-800 mb-2">
-                  Grupo:
-                </label>
+          <div className="w-1/3 flex flex-col gap-6 overflow-y-auto custom-scrollbar pr-4">
+            {/* Grupo */}
+            <div>
+              <label className="block text-lg font-medium text-black mb-2">
+                Grupo:
+              </label>
+              <div className="flex">
                 <Autocomplete
                   options={groups}
                   value={formData.groupId}
                   onChange={(value) => handleChange('groupId', value)}
-                  placeholder="Escribe o selecciona un grupo (ej: 1CM1, 2CV3)"
                   disabled={mode === 'edit'}
-                  className={mode === 'edit' ? 'bg-gray-100 cursor-not-allowed' : ''}
+                  className={`w-full px-4 py-2 border-2 border-black border-r-0 rounded-l-[10px] focus:outline-none ${mode === 'edit' ? 'bg-gray-100 cursor-not-allowed' : 'bg-white'}`}
+                  unstyled={true}
                 />
+                <div className="bg-[#D9D9D9] border-2 border-black rounded-r-[10px] w-12 flex items-center justify-center">
+                  <svg width="16" height="10" viewBox="0 0 16 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M2 2L8 8L14 2" stroke="black" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
               </div>
+            </div>
 
-              {/* Carrera */}
-              <div>
-                <label className="block text-base font-semibold text-gray-800 mb-2">
-                  Carrera:
-                </label>
+            {/* Carrera */}
+            <div>
+              <label className="block text-lg font-medium text-black mb-2">
+                Carrera:
+              </label>
+              <div className="flex">
                 <Input
                   value={formData.degree}
                   onChange={(e) => handleChange('degree', e.target.value)}
-                  placeholder="Ingeniería Mecánica, Ingeniería Eléctrica, etc."
                   disabled={mode === 'edit'}
-                  className={mode === 'edit' ? 'bg-gray-100 cursor-not-allowed' : ''}
+                  className={`w-full px-4 py-2 border-2 border-black border-r-0 rounded-l-[10px] focus:outline-none ${mode === 'edit' ? 'bg-gray-100 cursor-not-allowed' : 'bg-white'}`}
+                  unstyled={true}
                 />
+                <div className="bg-[#D9D9D9] border-2 border-black rounded-r-[10px] w-12 flex items-center justify-center">
+                  <svg width="16" height="10" viewBox="0 0 16 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M2 2L8 8L14 2" stroke="black" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
               </div>
+            </div>
 
-              {/* Materia */}
-              <div>
-                <label className="block text-base font-semibold text-gray-800 mb-2">
-                  Materia:
-                </label>
+            {/* Materia */}
+            <div>
+              <label className="block text-lg font-medium text-black mb-2">
+                Materia:
+              </label>
+              <div className="flex">
                 <Autocomplete
                   options={subjects}
                   value={formData.subjectId}
                   onChange={(value) => handleChange('subjectId', value)}
-                  placeholder="Escribe o selecciona una materia"
                   disabled={mode === 'edit'}
-                  className={mode === 'edit' ? 'bg-gray-100 cursor-not-allowed' : ''}
+                  className={`w-full px-4 py-2 border-2 border-black border-r-0 rounded-l-[10px] focus:outline-none ${mode === 'edit' ? 'bg-gray-100 cursor-not-allowed' : 'bg-white'}`}
+                  unstyled={true}
                 />
-              </div>
-
-              {/* Plan de estudios */}
-              <div>
-                <label className="block text-base font-semibold text-gray-800 mb-2">
-                  Plan de estudios:
-                </label>
-                <Input
-                  value={formData.curriculum}
-                  onChange={(e) => handleChange('curriculum', e.target.value)}
-                  placeholder="Plan 2020, Plan 2016, etc."
-                  disabled={mode === 'edit'}
-                  className={mode === 'edit' ? 'bg-gray-100 cursor-not-allowed' : ''}
-                />
-              </div>
-
-              {/* Periodo escolar */}
-              <div>
-                <label className="block text-base font-semibold text-gray-800 mb-2">
-                  Periodo escolar:
-                </label>
-                <Input
-                  value={formData.schoolPeriod}
-                  onChange={(e) => handleChange('schoolPeriod', e.target.value)}
-                  placeholder="2026-1, 2026-2, etc."
-                  disabled={mode === 'edit'}
-                  className={mode === 'edit' ? 'bg-gray-100 cursor-not-allowed' : ''}
-                />
+                <div className="bg-[#D9D9D9] border-2 border-black rounded-r-[10px] w-12 flex items-center justify-center">
+                  <svg width="16" height="10" viewBox="0 0 16 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M2 2L8 8L14 2" stroke="black" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
               </div>
             </div>
 
-            {/* Nota sobre funcionalidades */}
-            <div className="mt-8 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-              <p className="text-sm text-yellow-800">
-                <strong>Nota:</strong> Las funciones de guardado están implementadas pero
-                no hay botón de &quot;Guardar&quot; en el diseño actual. El equipo debe agregar el
-                trigger correspondiente.
-              </p>
+            {/* Plan de estudios */}
+            <div>
+              <label className="block text-lg font-medium text-black mb-2">
+                Plan de estudios:
+              </label>
+              <div className="flex">
+                <Input
+                  value={formData.curriculum}
+                  onChange={(e) => handleChange('curriculum', e.target.value)}
+                  disabled={mode === 'edit'}
+                  className={`w-full px-4 py-2 border-2 border-black border-r-0 rounded-l-[10px] focus:outline-none ${mode === 'edit' ? 'bg-gray-100 cursor-not-allowed' : 'bg-white'}`}
+                  unstyled={true}
+                />
+                <div className="bg-[#D9D9D9] border-2 border-black rounded-r-[10px] w-12 flex items-center justify-center">
+                  <svg width="16" height="10" viewBox="0 0 16 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M2 2L8 8L14 2" stroke="black" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            {/* Periodo escolar */}
+            <div>
+              <label className="block text-lg font-medium text-black mb-2">
+                Periodo escolar:
+              </label>
+              <div className="flex">
+                <Input
+                  value={formData.schoolPeriod}
+                  onChange={(e) => handleChange('schoolPeriod', e.target.value)}
+                  disabled={mode === 'edit'}
+                  className={`w-full px-4 py-2 border-2 border-black border-r-0 rounded-l-[10px] focus:outline-none ${mode === 'edit' ? 'bg-gray-100 cursor-not-allowed' : 'bg-white'}`}
+                  unstyled={true}
+                />
+                <div className="bg-[#D9D9D9] border-2 border-black rounded-r-[10px] w-12 flex items-center justify-center">
+                  <svg width="16" height="10" viewBox="0 0 16 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M2 2L8 8L14 2" stroke="black" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+              </div>
             </div>
           </div>
 
           {/* Panel derecho: Tabla de estudiantes */}
-          <div className="bg-linear-to-br from-blue-50 to-white rounded-2xl shadow-2xl border-2 border-blue-200 p-8">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-gray-800">Estudiantes</h2>
-              <div className="flex gap-3">
-                {/* Botón Cargar Excel - Solo UI */}
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".xlsx,.xls"
-                  className="hidden"
-                  onChange={() => {
-                    // TODO: Implementar parseo de Excel
-                    alert('Funcionalidad de Cargar Excel pendiente de implementar');
-                    fileInputRef.current.value = '';
-                  }}
-                />
-                <Button
-                  variant="outline"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="flex items-center gap-2"
-                >
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                    />
-                  </svg>
-                  Cargar Excel
-                </Button>
-
-                {/* Botón Añadir alumno - Sin funcionalidad */}
-                <Button
-                  onClick={() => {
-                    // TODO: Implementar modal de agregar alumno manual
-                    alert('Funcionalidad de Añadir alumno pendiente de implementar');
-                  }}
-                  className="flex items-center gap-2"
-                >
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 4v16m8-8H4"
-                    />
-                  </svg>
-                  Añadir alumno
-                </Button>
-              </div>
+          <div className="w-2/3 flex flex-col">
+            {/* Botón Cargar Excel */}
+            <div className="flex justify-start">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".xlsx,.xls"
+                className="hidden"
+                onChange={() => {
+                  alert('Funcionalidad de Cargar Excel pendiente de implementar');
+                  fileInputRef.current.value = '';
+                }}
+              />
+              <Button
+                onClick={() => fileInputRef.current?.click()}
+                className="bg-[#D9D9D9] border-2 border-black border-b-0 rounded-t-[5px] px-4 py-2 flex items-center gap-2 text-black font-medium text-sm relative top-[2px] z-10"
+                unstyled={true}
+              >
+                <svg width="16" height="20" viewBox="0 0 16 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M10 2H3C2.46957 2 1.96086 2.21071 1.58579 2.58579C1.21071 2.96086 1 3.46957 1 4V16C1 16.5304 1.21071 17.0391 1.58579 17.4142C1.96086 17.7893 2.46957 18 3 18H13C13.5304 18 14.0391 17.7893 14.4142 17.4142C14.7893 17.0391 15 16.5304 15 16V7L10 2Z" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                Cargar Excel
+              </Button>
             </div>
 
-            {students.length === 0 ? (
-              <div className="text-center py-12 text-gray-500">
-                No hay estudiantes inscritos
+            {/* Contenedor de la tabla */}
+            <div className="flex-1 border-2 border-black bg-[#CCFED9] overflow-hidden flex flex-col relative z-0">
+              <div className="flex-1 overflow-auto custom-scrollbar">
+                <table className="w-full border-collapse">
+                  <thead className="sticky top-0 bg-[#CCFED9] z-10">
+                    <tr>
+                      <th className="border-b-2 border-r-2 border-black p-4 text-center font-medium text-black w-1/3">Boleta</th>
+                      <th className="border-b-2 border-r-2 border-black p-4 text-center font-medium text-black w-1/3">Nombre</th>
+                      <th className="border-b-2 border-black p-2 text-center w-1/3">
+                        <Button
+                          onClick={() => alert('Funcionalidad de Añadir alumno pendiente de implementar')}
+                          className="bg-[#D9D9D9] border-2 border-black rounded-[5px] px-3 py-1 flex items-center justify-center gap-2 text-black text-xs font-bold mx-auto shadow-[2px_2px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_rgba(0,0,0,1)]"
+                          unstyled={true}
+                        >
+                          <div className="flex items-center justify-center w-4 h-4 border-2 border-black rounded-full">
+                            <span className="text-black text-xs font-bold leading-none">+</span>
+                          </div>
+                          Añadir alumno
+                        </Button>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {students.length === 0 ? (
+                      <tr>
+                        <td colSpan="3" className="text-center py-12 text-gray-500 border-b-2 border-black">
+                          No hay estudiantes inscritos
+                        </td>
+                      </tr>
+                    ) : (
+                      students.map((student) => (
+                        <tr key={student.id || student.tempId}>
+                          <td className="border-b-2 border-r-2 border-black p-4 text-center text-gray-500 font-medium text-lg">
+                            {student.boleta}
+                          </td>
+                          <td className="border-b-2 border-r-2 border-black p-4 text-center text-[#88c999] font-medium text-lg">
+                            {student.nombre}
+                          </td>
+                          <td className="border-b-2 border-black p-4 text-center">
+                            <Button
+                              onClick={() => handleRemoveStudent(student.id)}
+                              className="bg-[#D9D9D9] border-2 border-black rounded-[5px] px-3 py-1 flex items-center justify-center gap-2 text-black text-xs font-bold mx-auto shadow-[2px_2px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_rgba(0,0,0,1)]"
+                              unstyled={true}
+                            >
+                              <div className="flex items-center justify-center w-4 h-4 border-2 border-black rounded-full">
+                                <span className="text-black text-xs font-bold leading-none">x</span>
+                              </div>
+                              Eliminar
+                            </Button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
               </div>
-            ) : (
-              <Table columns={studentColumns} data={students} />
-            )}
+            </div>
           </div>
         </div>
       </div>

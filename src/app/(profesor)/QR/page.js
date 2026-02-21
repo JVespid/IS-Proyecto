@@ -25,7 +25,7 @@ function QRPageContent() {
   const [error, setError] = useState('');
   const [group, setGroup] = useState(null);
   const [lifeTime, setLifeTime] = useState(15); // Tiempo de actualización en segundos
-  const [activeTime, setActiveTime] = useState(1); // Duración total en minutos
+  const [activeTime, setActiveTime] = useState(90); // Duración total en minutos
 
   // Cargar datos del grupo
   useEffect(() => {
@@ -63,15 +63,15 @@ function QRPageContent() {
 
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-green-400 to-green-300">
-        <Spinner size="lg" />
+      <div className="min-h-screen flex items-center justify-center bg-[#4ba96c]">
+        <Spinner size="lg" color="white" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-green-400 to-green-300">
+      <div className="min-h-screen flex items-center justify-center bg-[#4ba96c]">
         <div className="bg-white p-8 rounded-lg shadow-lg">
           <p className="text-red-600 font-semibold">{error}</p>
         </div>
@@ -84,16 +84,37 @@ function QRPageContent() {
   }
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-green-400 to-green-300 flex items-center justify-center p-8">
-      <div className="w-full max-w-2xl">
-        <div className="bg-linear-to-br from-blue-50 to-white rounded-2xl shadow-2xl border-2 border-blue-200 p-8">
+    <div className="min-h-screen w-full bg-[#4ba96c] p-8 flex items-center justify-center relative overflow-hidden">
+      <div className="w-full  max-w-5/12 h-[92vh] bg-[#ccfed9] rounded-[1.5rem] border border-[#449e63] p-8 shadow-none relative flex flex-col">
+        
+        {/* Botón atrás */}
+        <div className="absolute top-6 left-6">
+          <Button
+            variant="outline"
+            onClick={() => router.push('/')}
+            className="bg-gradient-to-b from-[#f9f9f9] to-[#e0e0e0] border-none text-black hover:bg-gray-100 w-12 h-12 p-0 flex items-center justify-center rounded-lg shadow-sm"
+            unstyled={false}
+          >
+            <svg
+              className="w-7 h-7 text-[#222]"
+              fill="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" />
+            </svg>
+          </Button>
+        </div>
+
+        {/* Contenedor interno */}
+        <div className="border border-[#84c7c6] mt-16 h-full bg-[#e6ffea] flex flex-col items-center py-8 px-4 overflow-y-auto custom-scrollbar">
+          
           {/* Título */}
-          <h1 className="text-3xl font-bold text-gray-800 text-center mb-8">
+          <h1 className="text-4xl font-normal text-black text-center mb-8">
             Generar QR
           </h1>
 
           {/* Área del QR */}
-          <div className="bg-gray-200 rounded-lg border-2 border-gray-300 p-8 mb-8 flex items-center justify-center min-h-100">
+          <div className="bg-[#e0e0e0] border border-black w-80 h-80 flex items-center justify-center mb-8">
             {currentGroupId ? (
               <QRGenerator 
                 sessionId={currentGroupId} 
@@ -101,24 +122,23 @@ function QRPageContent() {
                 activeTime={activeTime}
               />
             ) : (
-              <p className="text-gray-500 text-center">
-                &quot;Aquí va el QR&quot;
+              <p className="text-gray-500 text-xl text-center">
+                &quot;Aqui va el<br/>QR&quot;
               </p>
             )}
           </div>
 
           {/* Botón Establecer tiempo */}
-          <div className="flex justify-center mb-6">
+          <div className="flex justify-center mb-4">
             <Button
               onClick={() => {
-                // TODO: Implementar modal de configuración de tiempo
                 alert('Funcionalidad de Establecer tiempo pendiente de implementar');
               }}
-              className="flex items-center gap-3 bg-purple-500 hover:bg-purple-600 text-white px-6 py-3 rounded-full shadow-lg"
-              unstyled={false}
+              className="flex items-center gap-2 bg-[#9b9aff] hover:bg-[#8a89ff] text-white px-8 py-2 rounded-full text-lg font-normal"
+              unstyled={true}
             >
               <svg
-                className="w-5 h-5"
+                className="w-6 h-6"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -126,7 +146,7 @@ function QRPageContent() {
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  strokeWidth={2}
+                  strokeWidth={1.5}
                   d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                 />
               </svg>
@@ -135,55 +155,32 @@ function QRPageContent() {
           </div>
 
           {/* Tiempo de vida */}
-          <div className="mb-6">
-            <label className="block text-center text-gray-800 font-semibold mb-2">
-              Tiempo de vida:
-            </label>
-            <div className="h-12 border-b-2 border-gray-300 flex items-center justify-center">
-              <span className="text-gray-600">{activeTime} minutos (actualización cada {lifeTime}s)</span>
-            </div>
+          <div className="mb-8">
+            <p className="text-center text-black text-lg">
+              Tiempo de vida: {lifeTime} segundos (actualiza cada {lifeTime} segundos) | Tiempo activo: {activeTime} minutos
+            </p>
           </div>
+
+          {/* Línea separadora */}
+          <div className="w-full max-w-2xl border-t border-[#84c7c6] mb-8"></div>
 
           {/* Botón Generar nuevo QR */}
-          <div className="flex justify-center">
+          <div className="flex justify-center relative w-72 h-10">
+            {/* Bloques grises a los lados */}
+            <div className="absolute inset-0 flex justify-between items-center px-0">
+              <div className="w-6 h-8 bg-[#cccccc]"></div>
+              <div className="w-6 h-8 bg-[#cccccc]"></div>
+            </div>
+            {/* Botón principal */}
             <Button
               disabled
-              className="bg-gray-200 text-gray-500 px-8 py-3 rounded-lg cursor-not-allowed"
+              className="relative z-10 bg-gradient-to-b from-white to-[#e6e6ff] text-black px-8 py-1 text-lg font-normal shadow-sm w-64"
               unstyled={true}
             >
-              Generar nuevo QR
+              Generar <strong>nuevo QR</strong>
             </Button>
           </div>
 
-          {/* Nota sobre funcionalidad */}
-          <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <p className="text-sm text-yellow-800">
-              <strong>Nota:</strong> Los botones &quot;Establecer tiempo&quot; y &quot;Generar nuevo QR&quot; 
-              están pendientes de implementación según diseño.
-            </p>
-          </div>
-
-          {/* Información del grupo */}
-          <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <p className="text-sm text-gray-700">
-              <strong>Materia:</strong> {group.Subject?.Subject || 'N/A'}
-              <br />
-              <strong>Grupo:</strong> {group.Group?.group || 'N/A'}
-              <br />
-              <strong>Periodo:</strong> {group.schoolPeriod || 'N/A'}
-            </p>
-          </div>
-
-          {/* Botón volver */}
-          <div className="mt-6 flex justify-center">
-            <Button
-              variant="outline"
-              onClick={() => router.push('/')}
-              className="bg-white hover:bg-gray-50"
-            >
-              ← Volver al Dashboard
-            </Button>
-          </div>
         </div>
       </div>
     </div>
@@ -193,8 +190,8 @@ function QRPageContent() {
 export default function QRPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-green-400 to-green-300">
-        <Spinner size="lg" />
+      <div className="min-h-screen flex items-center justify-center bg-[#4ba96c]">
+        <Spinner size="lg" color="white" />
       </div>
     }>
       <QRPageContent />

@@ -66,9 +66,7 @@ export const sessionSchema = z.object({
   
   // Campos adicionales de contexto académico (opcionales)
   curriculum: z.string().optional(),
-  schoolPeriod: z.string()
-    .regex(/^\d{5}$/, 'El periodo escolar debe tener formato AAAAS (5 dígitos: año + semestre)')
-    .optional(),
+  schoolPeriod: z.string().min(1, 'El periodo escolar es requerido').max(20).optional(),
   degree: z.string().optional(),
   school: z.string().default('ESCUELA SUPERIOR DE INGENIERIA MECANICA Y ELECTRICA UNIDAD CULHUACAN'),
   institute: z.string().default('INSTITUTO POLITECNICO NACIONAL'),
@@ -114,9 +112,7 @@ export const createSessionSchema = z.object({
   
   // Campos opcionales de contexto académico (CurrentGroup)
   curriculum: z.string().optional(),
-  schoolPeriod: z.string()
-    .regex(/^\d{5}$/, 'El periodo escolar debe tener formato AAAAS (5 dígitos: año + semestre)')
-    .optional(),
+  schoolPeriod: z.string().min(1, 'El periodo escolar es requerido').max(20).optional(),
   degree: z.string().optional(),
   school: z.string().optional(),
   institute: z.string().optional(),

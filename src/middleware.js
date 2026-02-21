@@ -1,5 +1,5 @@
 /**
- * Proxy de Next.js (anteriormente middleware)
+ * Middleware de Next.js
  * Protege rutas que requieren autenticación
  * Solo /login y /register son accesibles sin sesión
  */
@@ -7,7 +7,7 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse } from 'next/server';
 
-export async function proxy(request) {
+export async function middleware(request) {
   let response = NextResponse.next({
     request: {
       headers: request.headers,
