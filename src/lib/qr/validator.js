@@ -1,15 +1,17 @@
 /**
  * Validador de QR Codes
- * Valida códigos QR y sus firmas
+ * Valida códigos QR de forma simplificada (sin firmas HMAC)
  */
 
-import { validateSignature } from '@/lib/utils/crypto';
 import { log, logError } from '@/constants/config';
 
 const MODULE_NAME = 'QR Validator';
 
+// Margen de error en milisegundos (3 segundos)
+const VALIDATION_MARGIN = 3000;
+
 /**
- * Decodifica los datos de un QR code
+ * Decodifica los datos de un QR code (simplificado)
  * @param {string} qrString - String completo del QR (URL)
  * @returns {object|null} Datos decodificados o null si inválido
  */
@@ -20,27 +22,21 @@ export const decodeQRData = (qrString) => {
     // Parsear la URL
     const url = new URL(qrString);
     
-    // Extraer sessionId del path /asistencia/[sessionId]
-    const pathParts = url.pathname.split('/');
-    const sessionId = pathParts[pathParts.length - 1];
-    
     // Extraer parámetros de query
-    const signature = url.searchParams.get('signature');
-    const timestamp = parseInt(url.searchParams.get('timestamp'), 10);
+    const sessionId = url.searchParams.get('sessionId');
+    const expiresAt = parseInt(url.searchParams.get('expiresAt'), 10);
 
-    if (!sessionId || !signature || !timestamp) {
+    if (!sessionId || !expiresAt) {
       log(MODULE_NAME, 'Datos de QR incompletos', {
         hasSessionId: !!sessionId,
-        hasSignature: !!signature,
-        hasTimestamp: !!timestamp,
+        hasExpiresAt: !!expiresAt,
       });
       return null;
     }
 
     const decoded = {
       sessionId,
-      signature,
-      timestamp,
+      expiresAt,
     };
 
     log(MODULE_NAME, 'Datos de QR decodificados exitosamente', { sessionId });
@@ -53,25 +49,25 @@ export const decodeQRData = (qrString) => {
 };
 
 /**
- * Valida el payload y la firma de un QR
- * @param {object} payload - Datos del payload (sessionId, timestamp, expiresAt)
- * @param {string} signature - Firma a validar
- * @returns {boolean} True si la firma es válida
+ * Valida si un QR no ha expirado (con margen de +3 segundos)
+ * @param {number} expiresAt - Timestamp de expiración
+ * @returns {boolean} True si el QR es válido
  */
-export const validateQRPayload = (payload, signature) => {
+export const validateQRExpiration = (expiresAt) => {
   try {
-    log(MODULE_NAME, 'Validando payload de QR', {
-      sessionId: payload.sessionId,
-      timestamp: payload.timestamp,
+    const now = Date.now();
+    const isValid = now <= (expiresAt + VALIDATION_MARGIN);
+
+    log(MODULE_NAME, 'Validando expiración de QR', {
+      expiresAt: new Date(expiresAt).toISOString(),
+      now: new Date(now).toISOString(),
+      margin: `${VALIDATION_MARGIN}ms`,
+      isValid,
     });
-
-    const isValid = validateSignature(payload, signature);
-
-    log(MODULE_NAME, 'Resultado de validación de firma', { isValid });
 
     return isValid;
   } catch (error) {
-    logError(MODULE_NAME, 'Error al validar payload de QR', error);
+    logError(MODULE_NAME, 'Error al validar expiración de QR', error);
     return false;
   }
 };
@@ -113,39 +109,26 @@ export const getTimeRemaining = (expiresAt) => {
 };
 
 /**
- * Valida completamente un QR code
+ * Valida completamente un QR code (simplificado)
  * @param {string} sessionId - ID de la sesión
- * @param {string} signature - Firma del QR
- * @param {number} timestamp - Timestamp de creación
- * @param {number} duration - Duración configurada en minutos
+ * @param {number} expiresAt - Timestamp de expiración
  * @returns {object} Resultado de la validación
  */
-export const validateQRCode = (sessionId, signature, timestamp, duration) => {
+export const validateQRCode = (sessionId, expiresAt) => {
   try {
     log(MODULE_NAME, 'Validación completa de QR', {
       sessionId,
-      timestamp,
-      duration,
+      expiresAt: new Date(expiresAt).toISOString(),
     });
 
-    // Calcular expiresAt basado en timestamp y duration
-    const expiresAt = timestamp + duration * 60 * 1000;
-
-    // Crear payload para validar firma
-    const payload = {
-      sessionId,
-      timestamp,
-      expiresAt,
-    };
-
-    // Validar firma
-    const signatureValid = validateQRPayload(payload, signature);
-    if (!signatureValid) {
-      log(MODULE_NAME, 'Firma de QR inválida', { sessionId });
+    // Validar expiración (con margen de +3 segundos)
+    const isValid = validateQRExpiration(expiresAt);
+    if (!isValid) {
+      log(MODULE_NAME, 'QR expirado', { sessionId });
       return {
         valid: false,
-        reason: 'invalid_signature',
-        message: 'La firma del QR no es válida',
+        reason: 'expired',
+        message: 'El código QR ha expirado',
       };
     }
 
@@ -174,7 +157,6 @@ export const validateQRCode = (sessionId, signature, timestamp, duration) => {
     return {
       valid: true,
       sessionId,
-      timestamp,
       expiresAt,
       timeRemaining,
       message: 'QR válido',

@@ -1,7 +1,11 @@
 /**
  * Middleware de Next.js
  * Protege rutas que requieren autenticación
- * Solo /login y /register son accesibles sin sesión
+ * 
+ * Rutas PÚBLICAS (sin autenticación):
+ * - /login, /register, /logout
+ * - /asistencia/* (para escaneo de QR por estudiantes)
+ * - /api/* (excluidas del middleware, ver config.matcher)
  */
 
 import { createServerClient } from '@supabase/ssr';
@@ -75,6 +79,9 @@ export async function middleware(request) {
     request.nextUrl.pathname === route
   );
   
+  // Verificar si la ruta es de asistencia (accesible sin autenticación para escaneo de QR)
+  const isAttendanceRoute = request.nextUrl.pathname.startsWith('/asistencia');
+  
   // Verificar si es ruta de auth (login/register)
   const isAuthRoute = authRoutes.some((route) =>
     request.nextUrl.pathname === route
@@ -94,8 +101,8 @@ export async function middleware(request) {
     return redirectResponse;
   }
 
-  // Si NO es ruta pública y NO hay sesión, redirigir a login
-  if (!isPublicRoute && !session) {
+  // Si NO es ruta pública, NO es ruta de asistencia y NO hay sesión, redirigir a login
+  if (!isPublicRoute && !isAttendanceRoute && !session) {
     const redirectUrl = new URL('/login', request.url);
     const redirectResponse = NextResponse.redirect(redirectUrl);
     

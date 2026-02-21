@@ -70,15 +70,23 @@ export const generateQRPayload = (
 };
 
 /**
- * Genera la URL completa para el QR
- * @param {string} encodedData - Datos codificados en base64
+ * Genera la URL completa para el QR (simplificada sin firmas)
+ * Detecta automáticamente la URL base dependiendo del entorno:
+ * - En el cliente (navegador): usa window.location.origin
+ * - En el servidor: usa NEXT_PUBLIC_APP_URL o fallback
+ * @param {string} sessionId - ID del CurrentGroup
+ * @param {number} expiresAt - Timestamp de expiración
  * @returns {string} URL completa
  */
-export const generateQRUrl = (encodedData) => {
-  const baseUrl = APP_CONFIG.APP_URL;
-  const url = `${baseUrl}/asistencia/scan?qr=${encodeURIComponent(encodedData)}`;
+export const generateQRUrl = (sessionId, expiresAt) => {
+  // Detectar si estamos en el cliente o servidor
+  const baseUrl = typeof window !== 'undefined' 
+    ? window.location.origin // En el cliente, usar la URL actual
+    : APP_CONFIG.APP_URL;     // En el servidor, usar variable de entorno
+  
+  const url = `${baseUrl}/asistencia/validate?sessionId=${sessionId}&expiresAt=${expiresAt}`;
 
-  log(MODULE_NAME, 'URL de QR generada', { encodedDataLength: encodedData.length });
+  log(MODULE_NAME, 'URL de QR generada', { sessionId, expiresAt, baseUrl });
 
   return url;
 };
@@ -131,8 +139,8 @@ export const generateSessionQR = async (
     // Generar payload
     const payload = generateQRPayload(sessionId, iteration, lifeTime, activeTime);
 
-    // Generar URL
-    const url = generateQRUrl(payload.encodedData);
+    // Generar URL (simplificada sin firmas)
+    const url = generateQRUrl(payload.sessionId, payload.expiresAt);
 
     // Generar imagen del QR
     const qrImage = await generateQRImage(url);

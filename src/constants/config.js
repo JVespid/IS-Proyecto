@@ -83,15 +83,47 @@ export const log = (module, message, data = {}) => {
  * Función de logging de errores
  * @param {string} module - Módulo que genera el error
  * @param {string} message - Mensaje del error
- * @param {Error} error - Objeto de error
+ * @param {Error|Object|string} error - Objeto de error, objeto arbitrario o mensaje
  */
 export const logError = (module, message, error) => {
   const timestamp = new Date().toISOString();
+  
+  // Manejar diferentes tipos de errores
+  let errorData = {};
+  
+  if (error instanceof Error) {
+    // Error estándar de JavaScript
+    errorData = {
+      error: error.message,
+      name: error.name,
+      stack: error.stack,
+    };
+  } else if (typeof error === 'object' && error !== null) {
+    // Objeto arbitrario (puede ser de librerías externas)
+    errorData = {
+      error: error.message || error.error || JSON.stringify(error),
+      name: error.name || 'Unknown',
+      stack: error.stack || 'No stack trace',
+      ...error, // Incluir todas las propiedades del objeto
+    };
+  } else if (typeof error === 'string') {
+    // Mensaje de error simple
+    errorData = {
+      error: error,
+      name: 'String Error',
+      stack: 'No stack trace',
+    };
+  } else {
+    // Cualquier otro tipo
+    errorData = {
+      error: String(error),
+      name: typeof error,
+      stack: 'No stack trace',
+    };
+  }
+  
   console.error(
     `${LOGGING.PREFIX} [${timestamp}] [${module}] ERROR: ${message}`,
-    {
-      error: error.message,
-      stack: error.stack,
-    },
+    errorData,
   );
 };

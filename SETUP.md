@@ -86,6 +86,8 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=tu_anon_key_aqui
 SUPABASE_SERVICE_ROLE_KEY=tu_service_role_key_aqui
 
 # APP
+# En desarrollo: El QR detecta automáticamente localhost:PUERTO (opcional)
+# En producción: Debes configurar la URL de Vercel
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 NEXT_PUBLIC_SESSION_DURATION=90
 

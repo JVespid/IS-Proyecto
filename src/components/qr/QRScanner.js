@@ -14,14 +14,26 @@ export default function QRScanner({ onScan, onError, autoStart = false }) {
   const { scanning, error, startScanning, stopScanning, scannerId } =
     useQRScanner(onScan, onError);
 
+  // Auto-start del scanner cuando se monta (si autoStart=true)
   useEffect(() => {
     if (autoStart) {
-      startScanning();
+      // Pequeño delay para asegurar que el DOM está listo
+      const timer = setTimeout(() => {
+        startScanning();
+      }, 100);
+      
+      return () => {
+        clearTimeout(timer);
+        stopScanning();
+      };
     }
+    
+    // Cleanup: detener scanner al desmontar
     return () => {
       stopScanning();
     };
-  }, [autoStart, startScanning, stopScanning]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoStart]);
 
   return (
     <Card title="Escanear QR" className="text-center">

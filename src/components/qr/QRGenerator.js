@@ -21,9 +21,6 @@ export default function QRGenerator({
   const [iteration, setIteration] = useState(0);
   const intervalRef = useRef(null);
 
-  // Calcular iteraciones máximas: (activeTime * 60) / lifeTime
-  const maxIterations = Math.floor((activeTime * 60) / lifeTime);
-
   // Función para generar QR
   const generateQR = async (currentIteration) => {
     try {
@@ -46,33 +43,42 @@ export default function QRGenerator({
   useEffect(() => {
     if (!sessionId) return;
 
+    // Calcular iteraciones máximas DENTRO del efecto
+    const maxIter = Math.floor((activeTime * 60) / lifeTime);
+    let currentIteration = 0;
+
     // Generar QR inicial
     generateQR(0);
     setIteration(0);
 
+    // Limpiar intervalo anterior si existe
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
+
     // Configurar intervalo para auto-actualización
     intervalRef.current = setInterval(() => {
-      setIteration((prevIteration) => {
-        const newIteration = prevIteration + 1;
-        
-        // Si alcanzamos el máximo, detener
-        if (newIteration >= maxIterations) {
-          if (intervalRef.current) {
-            clearInterval(intervalRef.current);
-          }
-          return maxIterations;
+      currentIteration++;
+      
+      // Si alcanzamos el máximo, detener
+      if (currentIteration >= maxIter) {
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
         }
-        
-        // Generar nuevo QR con la nueva iteración
-        generateQR(newIteration);
-        return newIteration;
-      });
+        setIteration(maxIter);
+        return;
+      }
+      
+      // Generar nuevo QR con la nueva iteración
+      setIteration(currentIteration);
+      generateQR(currentIteration);
     }, lifeTime * 1000);
 
     // Cleanup
     return () => {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
+        intervalRef.current = null;
       }
     };
   }, [sessionId, lifeTime, activeTime]);
@@ -95,6 +101,8 @@ export default function QRGenerator({
 
   if (!qrData) return null;
 
+  // Recalcular maxIterations para verificar expiración
+  const maxIterations = Math.floor((activeTime * 60) / lifeTime);
   const isExpired = iteration >= maxIterations;
 
   return (

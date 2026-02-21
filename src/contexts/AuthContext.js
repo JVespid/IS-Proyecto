@@ -5,7 +5,7 @@
 
 'use client';
 
-import { createContext, useState, useEffect, useCallback } from 'react';
+import { createContext, useState, useEffect, useCallback, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { findByEmail, createProfessor } from '@/services/professor.service';
 import { log, logError } from '@/constants/config';
@@ -23,12 +23,13 @@ export const AuthContext = createContext({
 
 export const AuthProvider = ({ children }) => {
   const supabase = createClient();
+  const supabaseRef = useRef(supabase); // Ref estable para useCallback
   const [user, setUser] = useState(null);
   const [professor, setProfessor] = useState(null);
   const [loading, setLoading] = useState(true);
 
   // Cargar profesor basado en el usuario de Supabase Auth
-  const loadProfessor = async (authUser) => {
+  const loadProfessor = useCallback(async (authUser) => {
     try {
       if (!authUser) {
         setProfessor(null);
@@ -40,7 +41,7 @@ export const AuthProvider = ({ children }) => {
         email: authUser.email,
       });
 
-      const prof = await findByEmail(authUser.email, supabase);
+      const prof = await findByEmail(authUser.email, supabaseRef.current);
       
       if (prof) {
         setProfessor(prof);
@@ -57,14 +58,14 @@ export const AuthProvider = ({ children }) => {
       logError(MODULE_NAME, 'Error al cargar profesor', error);
       setProfessor(null);
     }
-  };
+  }, []);
 
   // Inicializar autenticación
   useEffect(() => {
     log(MODULE_NAME, 'Inicializando AuthContext');
 
     // Obtener sesión inicial
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabaseRef.current.auth.getSession().then(({ data: { session } }) => {
       const currentUser = session?.user ?? null;
       setUser(currentUser);
       loadProfessor(currentUser).finally(() => setLoading(false));
@@ -73,7 +74,7 @@ export const AuthProvider = ({ children }) => {
     // Escuchar cambios en el estado de autenticación
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabaseRef.current.auth.onAuthStateChange((_event, session) => {
       log(MODULE_NAME, 'Cambio en estado de autenticación', { event: _event });
       const currentUser = session?.user ?? null;
       setUser(currentUser);
@@ -81,7 +82,7 @@ export const AuthProvider = ({ children }) => {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [loadProfessor]);
 
   /**
    * Iniciar sesión
@@ -92,7 +93,7 @@ export const AuthProvider = ({ children }) => {
     try {
       log(MODULE_NAME, 'Iniciando sesión', { email });
 
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabaseRef.current.auth.signInWithPassword({
         email,
         password,
       });
@@ -130,7 +131,7 @@ export const AuthProvider = ({ children }) => {
 
       // Intentar cerrar sesión en Supabase
       // Ignoramos errores porque la sesión podría no existir
-      await supabase.auth.signOut();
+      await supabaseRef.current.auth.signOut();
 
       log(MODULE_NAME, 'Sesión cerrada exitosamente');
       return { success: true };
@@ -151,7 +152,7 @@ export const AuthProvider = ({ children }) => {
       log(MODULE_NAME, 'Registrando nuevo profesor', { email });
 
       // Crear usuario en Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.signUp({
+      const { data: authData, error: authError } = await supabaseRef.current.auth.signUp({
         email,
         password,
         options: {
@@ -169,7 +170,7 @@ export const AuthProvider = ({ children }) => {
       log(MODULE_NAME, 'Usuario de auth creado', { userId: authData.user.id });
 
       // Crear registro en tabla Professors
-      const professorData = await createProfessor({ name, lastName, email }, supabase);
+      const professorData = await createProfessor({ name, lastName, email }, supabaseRef.current);
 
       log(MODULE_NAME, 'Profesor registrado exitosamente', {
         professorId: professorData.id,
