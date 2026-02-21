@@ -82,7 +82,7 @@ export async function GET(request) {
     }
 
     // Verificar que el grupo tenga estudiantes registrados
-    const { data: studentsInGroup, error: studentsError } = await supabase
+    const { data: studentsInGroup, error: studentsError, count } = await supabase
       .schema('bdLista')
       .from('TakeAttendance')
       .select('id', { count: 'exact', head: true })
@@ -92,7 +92,10 @@ export async function GET(request) {
       logError(MODULE_NAME, 'Error al verificar estudiantes del grupo', studentsError);
     }
 
-    const studentCount = studentsInGroup?.length || 0;
+    const studentCount = count || 0;
+    
+    log(MODULE_NAME, 'Estudiantes encontrados en el grupo', { sessionId, studentCount });
+
     if (studentCount === 0) {
       log(MODULE_NAME, 'Grupo sin estudiantes registrados', { sessionId });
 
