@@ -137,7 +137,13 @@ function ListContent() {
       <div className="min-h-screen flex items-center justify-center bg-[#3eb575]">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-white mb-2">Error</h1>
-          <p className="text-white">{error}</p>
+          <p className="text-white mb-4">{error}</p>
+          <button
+            onClick={() => window.history.back()}
+            className="bg-white text-[#3eb575] px-6 py-2 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
+          >
+            Volver
+          </button>
         </div>
       </div>
     );

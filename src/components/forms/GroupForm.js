@@ -520,8 +520,15 @@ export default function GroupForm({
         </div>
 
         {error && (
-          <div className="absolute top-24 left-1/2 transform -translate-x-1/2 bg-red-100 border-2 border-red-500 text-red-700 px-4 py-2 rounded-lg shadow-[4px_4px_0px_rgba(0,0,0,1)] z-50">
-            {error}
+          <div className="absolute top-24 left-1/2 transform -translate-x-1/2 bg-red-100 border-2 border-red-500 text-red-700 px-4 py-2 rounded-lg shadow-[4px_4px_0px_rgba(0,0,0,1)] z-50 flex items-center gap-3">
+            <span>{error}</span>
+            <button
+              onClick={() => setError('')}
+              className="ml-2 text-red-700 hover:text-red-900 font-bold text-xl leading-none"
+              aria-label="Cerrar error"
+            >
+              ×
+            </button>
           </div>
         )}
 

@@ -72,8 +72,14 @@ function QRPageContent() {
   if (error) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#4ba96c]">
-        <div className="bg-white p-8 rounded-lg shadow-lg">
-          <p className="text-red-600 font-semibold">{error}</p>
+        <div className="bg-white p-8 rounded-lg shadow-lg text-center">
+          <p className="text-red-600 font-semibold mb-4">{error}</p>
+          <button
+            onClick={() => router.push('/dashboard')}
+            className="bg-[#4ba96c] text-white px-6 py-2 rounded-lg font-semibold hover:bg-[#3d8a59] transition-colors"
+          >
+            Volver al Dashboard
+          </button>
         </div>
       </div>
     );

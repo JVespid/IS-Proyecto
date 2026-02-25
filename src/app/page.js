@@ -49,6 +49,13 @@ export default function Home() {
     }
   }, [professor?.id]);
 
+  // Redirigir a login si no hay usuario después de cargar
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push('/login');
+    }
+  }, [authLoading, user, router]);
+
   // Filtrar grupos según búsqueda
   useEffect(() => {
     if (searchValue.trim() === "") {
@@ -98,28 +105,6 @@ export default function Home() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#4ba96c]">
         <Spinner size="lg" color="white" />
-      </div>
-    );
-  }
-
-  // Si no hay usuario autenticado, mostrar página de bienvenida
-  if (!user) {
-    return (
-      <div className="min-h-screen w-full bg-[#4ba96c] flex items-center justify-center p-8">
-        <div className="bg-[#ccfed9] rounded-3xl border border-[#449e63] p-12 shadow-lg text-center max-w-md">
-          <h1 className="text-4xl font-bold text-[#2f4f4f] mb-6">
-            Sistema de Asistencias
-          </h1>
-          <p className="text-xl text-[#2f4f4f] mb-8">
-            Bienvenido al sistema de gestión de asistencias
-          </p>
-          <Button
-            onClick={() => router.push("/login")}
-            className="bg-[#4ba96c] text-white border-2 border-black hover:bg-[#3d8a59] px-8 py-3 text-lg font-semibold rounded-lg shadow-md"
-          >
-            Iniciar Sesión
-          </Button>
-        </div>
       </div>
     );
   }

@@ -53,8 +53,15 @@ export default function LoginPage() {
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
-              <div className="p-3 bg-red-100 text-red-700 rounded-lg text-sm">
-                {error}
+              <div className="p-3 bg-red-100 text-red-700 rounded-lg text-sm flex items-center justify-between">
+                <span>{error}</span>
+                <button
+                  onClick={() => setError('')}
+                  className="ml-2 text-red-700 hover:text-red-900 font-bold text-xl leading-none"
+                  aria-label="Cerrar error"
+                >
+                  ×
+                </button>
               </div>
             )}
             

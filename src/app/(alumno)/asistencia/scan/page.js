@@ -261,10 +261,17 @@ function ScanPageContent() {
 
       {/* Mensajes de error */}
       {error && (
-        <div className="max-w-lg w-full p-4 bg-yellow-100 border-2 border-yellow-400 rounded-lg mb-4">
+        <div className="max-w-lg w-full p-4 bg-yellow-100 border-2 border-yellow-400 rounded-lg mb-4 flex items-start justify-between">
           <p className="text-sm text-yellow-800">
             <strong>Atención:</strong> {error}
           </p>
+          <button
+            onClick={() => setError(null)}
+            className="ml-2 text-yellow-800 hover:text-yellow-900 font-bold text-xl leading-none flex-shrink-0"
+            aria-label="Cerrar error"
+          >
+            ×
+          </button>
         </div>
       )}
 
