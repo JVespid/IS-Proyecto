@@ -42,7 +42,8 @@ export default function RegisterPage() {
     });
 
     if (result?.success) {
-      router.push('/login');
+      setLoading(false);
+      router.push('/');
     } else {
       setError(result?.error || 'Error al registrarse');
       setLoading(false);
