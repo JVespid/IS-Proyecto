@@ -17,7 +17,7 @@ export default function CreateGroupPage() {
 
   const handleSuccess = (groupId) => {
     console.log('Grupo creado exitosamente:', groupId);
-    router.push('/');
+    router.push('/dashboard');
   };
 
   // Mostrar spinner mientras carga el contexto de autenticación

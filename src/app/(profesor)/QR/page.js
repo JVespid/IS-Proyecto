@@ -32,7 +32,7 @@ function QRPageContent() {
     async function loadGroup() {
       if (!currentGroupId) {
         setError('ID de grupo no proporcionado');
-        setTimeout(() => router.push('/'), 2000);
+        setTimeout(() => router.push('/dashboard'), 2000);
         return;
       }
 
@@ -49,7 +49,7 @@ function QRPageContent() {
       } catch (err) {
         console.error('Error al cargar grupo:', err);
         setError('Error al cargar el grupo. Redirigiendo...');
-        setTimeout(() => router.push('/'), 2000);
+        setTimeout(() => router.push('/dashboard'), 2000);
       } finally {
         setLoading(false);
       }
@@ -91,7 +91,7 @@ function QRPageContent() {
         <div className="absolute top-6 left-6">
           <Button
             variant="outline"
-            onClick={() => router.push('/')}
+            onClick={() => router.push('/dashboard')}
             className="bg-gradient-to-b from-[#f9f9f9] to-[#e0e0e0] border-none text-black hover:bg-gray-100 w-12 h-12 p-0 flex items-center justify-center rounded-lg shadow-sm"
             unstyled={false}
           >

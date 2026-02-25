@@ -69,7 +69,7 @@ export async function middleware(request) {
   } = await supabase.auth.getSession();
 
   // Rutas PÚBLICAS (no requieren autenticación)
-  const publicRoutes = ['/login', '/register', '/logout'];
+  const publicRoutes = ['/', '/login', '/register', '/logout'];
   
   // Rutas de autenticación (login/register) - usuarios autenticados no pueden acceder
   const authRoutes = ['/login', '/register'];

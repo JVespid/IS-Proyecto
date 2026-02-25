@@ -93,7 +93,7 @@ export async function POST(request) {
     }
 
     // Verificar si el estudiante ya está registrado en esta sesión
-    // Nota: Obtenemos todos los registros para detectar duplicados
+    // Nota: Obtenemos todos los registros para detectar duplicados*
     const { data: attendanceRecords, error: checkError } = await supabase
       .schema(SCHEMA)
       .from('TakeAttendance')

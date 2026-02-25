@@ -30,20 +30,14 @@ export const recordAttendance = async (
     throw new Error('Supabase client is required');
   }
   try {
-    // Crear objeto de datos completo para el JSON
-    const attendanceData = {
-      reportCard: studentData.reportCard,
-      fullName: studentData.fullName,
-      scannedUrl: studentData.scannedUrl || null,
-      scannedAt: new Date().toISOString(),
-      additionalData: studentData.additionalData || {},
-    };
+    // takeAttendanceStudentData siempre inicia como array vacío
+    // Los datos se agregarán cuando el estudiante escanee el QR
 
     // Validar datos con Zod
     const validatedData = attendanceSchema.parse({
       studentId,
       currentGroupId,
-      takeAttendanceStudentData: attendanceData,
+      takeAttendanceStudentData: [], // Array vacío por defecto
       numberOfList,
     });
 

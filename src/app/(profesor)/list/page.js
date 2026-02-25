@@ -258,7 +258,8 @@ function ListContent() {
                         }}
                       >
                         {attendance.takeAttendanceStudentData &&
-                        Array.isArray(attendance.takeAttendanceStudentData) ? (
+                        Array.isArray(attendance.takeAttendanceStudentData) &&
+                        attendance.takeAttendanceStudentData.length > 0 ? (
                           attendance.takeAttendanceStudentData.map(
                             (record, idx) => (
                               <div

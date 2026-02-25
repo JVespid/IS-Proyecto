@@ -40,7 +40,7 @@ export default function EditGroupPage({ params }) {
           ? 'No tienes permisos para editar este grupo'
           : 'Error al cargar el grupo';
         setError(`${message}. Redirigiendo...`);
-        setTimeout(() => router.push('/'), 2000);
+        setTimeout(() => router.push('/dashboard'), 2000);
       } finally {
         setLoading(false);
       }
@@ -54,7 +54,7 @@ export default function EditGroupPage({ params }) {
 
   const handleSuccess = (groupId) => {
     console.log('Grupo actualizado exitosamente:', groupId);
-    router.push('/');
+    router.push('/dashboard');
   };
 
   if (loading) {

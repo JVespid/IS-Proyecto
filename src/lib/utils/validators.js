@@ -81,17 +81,14 @@ export const attendanceSchema = z.object({
   id: z.string().uuid().optional(),
   studentId: z.string().uuid('ID de estudiante inválido'),
   currentGroupId: z.string().uuid('ID de sesión inválido'),
-  takeAttendanceStudentData: z.object({
-    reportCard: z.string(),
-    fullName: z.string(),
-    scannedUrl: z.string().url().optional(),
-    scannedAt: z.string().datetime(),
-    additionalData: z.record(z.any()).optional(),
-  }),
+  
+  // Array vacío por defecto, se llena cuando el estudiante escanea el QR
+  takeAttendanceStudentData: z.array(z.any()).default([]),
   
   // Número de lista del estudiante (ingresado manualmente)
   numberOfList: z.string()
     .regex(/^\d+$/, 'El número de lista debe ser numérico (1, 2, 3, ...)')
+    .nullable()
     .optional(),
   
   created_at: z.string().datetime().optional(),

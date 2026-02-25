@@ -7,6 +7,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import * as XLSX from 'xlsx';
 import Autocomplete from '@/components/ui/Autocomplete';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
@@ -222,6 +223,15 @@ export default function GroupForm({
         groupId = currentGroupId;
       }
 
+      // Guardar estudiantes nuevos (los que vienen del Excel)
+      const newStudents = students.filter(s => s.tempId && !s.id);
+      
+      if (newStudents.length > 0) {
+        console.log(`Guardando ${newStudents.length} estudiantes nuevos en la BD...`);
+        await handleAddStudentsToGroup(groupId, newStudents);
+        console.log(`✓ ${newStudents.length} estudiantes agregados exitosamente`);
+      }
+
       // Callback de éxito
       if (onSuccess) {
         onSuccess(groupId);
@@ -253,7 +263,7 @@ export default function GroupForm({
           supabase
         );
         
-        // Crear inscripción en TakeAttendance
+        // Crear inscripción en TakeAttendance con número de lista
         const attendance = await recordAttendance(
           studentRecord.id,
           currentGroupId,
@@ -261,7 +271,7 @@ export default function GroupForm({
             reportCard: student.boleta,
             fullName: student.nombre,
           },
-          null, // numberOfList (opcional)
+          student.numeroLista ? String(student.numeroLista) : null, // Convertir a string
           supabase
         );
         
@@ -304,6 +314,128 @@ export default function GroupForm({
     } catch (err) {
       console.error('Error al eliminar estudiante:', err);
       setError(`Error al eliminar el estudiante: ${err.message}`);
+    }
+  };
+
+  /**
+   * FUNCIÓN: Cargar estudiantes desde archivo Excel/CSV
+   * Procesa archivos .xlsx, .xls y .csv con soporte UTF-8
+   */
+  const handleFileUpload = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setError('');
+      console.log('Procesando archivo:', file.name);
+
+      // Leer archivo como ArrayBuffer
+      const data = await file.arrayBuffer();
+      
+      // Parsear con xlsx (codepage 65001 = UTF-8)
+      const workbook = XLSX.read(data, { 
+        type: 'array',
+        codepage: 65001, // UTF-8 para caracteres especiales
+        raw: false // Convertir todo a strings
+      });
+
+      // Obtener primera hoja
+      const sheetName = workbook.SheetNames[0];
+      const sheet = workbook.Sheets[sheetName];
+
+      // Convertir a JSON
+      const jsonData = XLSX.utils.sheet_to_json(sheet, { 
+        header: 1, // Retornar como array de arrays
+        raw: false, // Convertir todo a strings
+        defval: '' // Valor por defecto para celdas vacías
+      });
+
+      console.log('Datos parseados:', jsonData);
+
+      if (jsonData.length < 2) {
+        throw new Error('El archivo está vacío o no tiene datos suficientes');
+      }
+
+      // Primera fila son los headers
+      const headers = jsonData[0].map(h => String(h).toLowerCase().trim());
+      console.log('Headers encontrados:', headers);
+
+      // Buscar índices de columnas (case-insensitive)
+      const nombreIndex = headers.findIndex(h => 
+        h === 'nombre' || h === 'name' || h === 'nombres' || h === 'fullname'
+      );
+      const boletaIndex = headers.findIndex(h => 
+        h === 'boleta' || h === 'reportcard' || h === 'matricula' || h === 'id'
+      );
+
+      if (nombreIndex === -1 || boletaIndex === -1) {
+        throw new Error(
+          'El archivo debe contener columnas "Nombre" y "Boleta". ' +
+          `Columnas encontradas: ${headers.join(', ')}`
+        );
+      }
+
+      // Procesar filas (saltar header en índice 0)
+      const nuevosEstudiantes = [];
+      let numeroLista = students.length + 1; // Continuar desde el último número
+
+      for (let i = 1; i < jsonData.length; i++) {
+        const row = jsonData[i];
+        const nombre = String(row[nombreIndex] || '').trim();
+        const boleta = String(row[boletaIndex] || '').trim();
+
+        // Saltar filas vacías
+        if (!nombre && !boleta) {
+          console.log(`Fila ${i + 1}: vacía, saltando...`);
+          continue;
+        }
+
+        // Validar que ambos campos tengan datos
+        if (!nombre || !boleta) {
+          console.warn(`Fila ${i + 1}: datos incompletos (nombre: "${nombre}", boleta: "${boleta}"). Saltando...`);
+          continue;
+        }
+
+        // Validar formato de boleta (solo números, mínimo 8 dígitos)
+        if (!/^\d{8,}$/.test(boleta)) {
+          console.warn(`Fila ${i + 1}: boleta inválida "${boleta}". Debe tener al menos 8 dígitos. Saltando...`);
+          continue;
+        }
+
+        // Verificar si ya existe en la lista actual
+        const yaExiste = students.some(s => s.boleta === boleta);
+        if (yaExiste) {
+          console.log(`Fila ${i + 1}: estudiante con boleta ${boleta} ya existe. Saltando...`);
+          continue;
+        }
+
+        nuevosEstudiantes.push({
+          tempId: Date.now() + i, // ID temporal único
+          boleta: boleta,
+          nombre: nombre,
+          numeroLista: numeroLista++
+        });
+      }
+
+      if (nuevosEstudiantes.length === 0) {
+        throw new Error('No se encontraron estudiantes válidos en el archivo');
+      }
+
+      // Agregar estudiantes a la lista
+      setStudents(prev => [...prev, ...nuevosEstudiantes]);
+      
+      console.log(`✓ ${nuevosEstudiantes.length} estudiantes agregados desde archivo`);
+      alert(`✓ Se agregaron ${nuevosEstudiantes.length} estudiantes correctamente`);
+
+    } catch (err) {
+      console.error('Error al procesar archivo:', err);
+      setError(`Error al procesar archivo: ${err.message}`);
+      alert(`Error al procesar archivo: ${err.message}`);
+    } finally {
+      // Limpiar input para permitir cargar el mismo archivo nuevamente
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   };
 
@@ -362,7 +494,7 @@ export default function GroupForm({
         {/* Botón Atrás */}
         <div className="absolute top-8 left-8">
           <Button
-            onClick={() => router.push('/')}
+            onClick={() => router.push('/dashboard')}
             className="bg-[#D9D9D9] border-2 border-black rounded-[5px] w-12 h-12 flex items-center justify-center shadow-[4px_4px_0px_rgba(0,0,0,1)] hover:bg-gray-300 active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0px_rgba(0,0,0,1)] transition-all"
             unstyled={true}
           >
@@ -511,12 +643,9 @@ export default function GroupForm({
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".xlsx,.xls"
+                accept=".xlsx,.xls,.csv"
                 className="hidden"
-                onChange={() => {
-                  alert('Funcionalidad de Cargar Excel pendiente de implementar');
-                  fileInputRef.current.value = '';
-                }}
+                onChange={handleFileUpload}
               />
               <Button
                 onClick={() => fileInputRef.current?.click()}
