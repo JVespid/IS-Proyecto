@@ -301,25 +301,33 @@ export default function GroupForm({
 
   /**
    * FUNCIÓN LISTA PARA USAR: Eliminar estudiante del grupo
-   * Elimina la inscripción de TakeAttendance
+   * Elimina la inscripción de TakeAttendance o de la lista temporal
    */
-  const handleRemoveStudent = async (attendanceId) => {
+  const handleRemoveStudent = async (studentIdentifier) => {
     try {
-      if (!attendanceId) {
-        console.error('Error: attendanceId es undefined o null');
-        setError('Error: No se puede eliminar el estudiante (ID inválido)');
+      // Buscar el estudiante para determinar si está en BD o es temporal
+      const student = students.find(s => s.id === studentIdentifier || s.tempId === studentIdentifier);
+      
+      if (!student) {
+        console.error('Error: estudiante no encontrado');
+        setError('Error: No se puede eliminar el estudiante (no encontrado)');
         return;
       }
 
-      console.log('Eliminando estudiante con attendanceId:', attendanceId);
+      // Si tiene ID de BD, eliminar de la base de datos
+      if (student.id) {
+        console.log('Eliminando estudiante de BD con id:', student.id);
+        const supabase = createClient();
+        await removeAttendance(student.id, supabase);
+        console.log('Estudiante eliminado de BD exitosamente');
+      } else {
+        console.log('Eliminando estudiante temporal con tempId:', student.tempId);
+      }
       
-      const supabase = createClient();
-      await removeAttendance(attendanceId, supabase);
-      
-      console.log('Estudiante eliminado exitosamente');
-      
-      // Actualizar lista local
-      setStudents((prev) => prev.filter((s) => s.id !== attendanceId));
+      // Actualizar lista local (eliminar por id o tempId)
+      setStudents((prev) => prev.filter((s) => 
+        s.id !== studentIdentifier && s.tempId !== studentIdentifier
+      ));
     } catch (err) {
       console.error('Error al eliminar estudiante:', err);
       setError(`Error al eliminar el estudiante: ${err.message}`);
@@ -558,7 +566,7 @@ export default function GroupForm({
         <div className="flex justify-end">
           <Button
             variant="danger"
-            onClick={() => handleRemoveStudent(row.id)}
+            onClick={() => handleRemoveStudent(row.id || row.tempId)}
             className="flex items-center gap-2"
           >
             <svg
@@ -808,7 +816,7 @@ export default function GroupForm({
                           </td>
                           <td className="border-b-2 border-black p-4 text-center">
                             <Button
-                              onClick={() => handleRemoveStudent(student.id)}
+                              onClick={() => handleRemoveStudent(student.id || student.tempId)}
                               className="bg-[#D9D9D9] border-2 border-black rounded-[5px] px-3 py-1 flex items-center justify-center gap-2 text-black text-xs font-bold mx-auto shadow-[2px_2px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_rgba(0,0,0,1)]"
                               unstyled={true}
                             >
