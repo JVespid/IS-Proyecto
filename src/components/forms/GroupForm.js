@@ -13,6 +13,7 @@ import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
 import Table from '@/components/ui/Table';
 import Spinner from '@/components/ui/Spinner';
+import Modal from '@/components/ui/Modal';
 import { createClient } from '@/lib/supabase/client';
 import { getAll as getAllSubjects, getOrCreate as getOrCreateSubject } from '@/services/subject.service';
 import { getAll as getAllGroups, getOrCreate as getOrCreateGroup } from '@/services/group.service';
@@ -48,6 +49,14 @@ export default function GroupForm({
   // Estudiantes inscritos
   const [students, setStudents] = useState([]);
   const [currentGroupId, setCurrentGroupId] = useState(null);
+  
+  // Modal para agregar alumno manualmente
+  const [showAddStudentModal, setShowAddStudentModal] = useState(false);
+  const [addStudentForm, setAddStudentForm] = useState({
+    nombre: '',
+    boleta: '',
+  });
+  const [addStudentError, setAddStudentError] = useState('');
 
   // Extraer solo el ID para evitar re-renders por objeto completo
   const initialDataId = initialData?.id;
@@ -318,6 +327,98 @@ export default function GroupForm({
   };
 
   /**
+   * FUNCIÓN: Reordenar estudiantes alfabéticamente y reasignar números de lista
+   */
+  const reorderStudents = (studentsList) => {
+    const sorted = [...studentsList].sort((a, b) => {
+      const nameA = (a.nombre || '').toLowerCase();
+      const nameB = (b.nombre || '').toLowerCase();
+      return nameA.localeCompare(nameB, 'es');
+    });
+    
+    // Reasignar números de lista secuencialmente
+    return sorted.map((student, index) => ({
+      ...student,
+      numeroLista: index + 1
+    }));
+  };
+
+  /**
+   * FUNCIÓN: Agregar alumno manualmente desde modal
+   */
+  const handleAddStudentManually = () => {
+    try {
+      setAddStudentError('');
+      
+      const nombre = addStudentForm.nombre.trim();
+      const boleta = addStudentForm.boleta.trim();
+      
+      // Validaciones
+      if (!nombre) {
+        setAddStudentError('El nombre es obligatorio');
+        return;
+      }
+      
+      if (!boleta) {
+        setAddStudentError('La boleta es obligatoria');
+        return;
+      }
+      
+      // Validar formato de boleta (solo números, mínimo 8 dígitos)
+      if (!/^\d{8,}$/.test(boleta)) {
+        setAddStudentError('La boleta debe tener al menos 8 dígitos numéricos');
+        return;
+      }
+      
+      // Verificar si ya existe
+      const yaExiste = students.some(s => s.boleta === boleta);
+      if (yaExiste) {
+        setAddStudentError('Ya existe un estudiante con esta boleta');
+        return;
+      }
+      
+      // Crear nuevo estudiante
+      const nuevoEstudiante = {
+        tempId: Date.now(),
+        boleta: boleta,
+        nombre: nombre,
+        numeroLista: students.length + 1 // Temporal, se reordenará
+      };
+      
+      // Agregar y reordenar alfabéticamente
+      const nuevaLista = reorderStudents([...students, nuevoEstudiante]);
+      setStudents(nuevaLista);
+      
+      // Cerrar modal y limpiar formulario
+      setShowAddStudentModal(false);
+      setAddStudentForm({ nombre: '', boleta: '' });
+      
+      console.log(`✓ Estudiante agregado: ${nombre} (${boleta})`);
+    } catch (err) {
+      console.error('Error al agregar estudiante:', err);
+      setAddStudentError(`Error: ${err.message}`);
+    }
+  };
+
+  /**
+   * FUNCIÓN: Abrir modal y limpiar formulario
+   */
+  const handleOpenAddStudentModal = () => {
+    setAddStudentForm({ nombre: '', boleta: '' });
+    setAddStudentError('');
+    setShowAddStudentModal(true);
+  };
+
+  /**
+   * FUNCIÓN: Cerrar modal
+   */
+  const handleCloseAddStudentModal = () => {
+    setShowAddStudentModal(false);
+    setAddStudentForm({ nombre: '', boleta: '' });
+    setAddStudentError('');
+  };
+
+  /**
    * FUNCIÓN: Cargar estudiantes desde archivo Excel/CSV
    * Procesa archivos .xlsx, .xls y .csv con soporte UTF-8
    */
@@ -421,8 +522,9 @@ export default function GroupForm({
         throw new Error('No se encontraron estudiantes válidos en el archivo');
       }
 
-      // Agregar estudiantes a la lista
-      setStudents(prev => [...prev, ...nuevosEstudiantes]);
+      // Agregar estudiantes y reordenar alfabéticamente
+      const nuevaLista = reorderStudents([...students, ...nuevosEstudiantes]);
+      setStudents(nuevaLista);
       
       console.log(`✓ ${nuevosEstudiantes.length} estudiantes agregados desde archivo`);
       alert(`✓ Se agregaron ${nuevosEstudiantes.length} estudiantes correctamente`);
@@ -676,7 +778,7 @@ export default function GroupForm({
                       <th className="border-b-2 border-r-2 border-black p-4 text-center font-medium text-black w-1/3">Nombre</th>
                       <th className="border-b-2 border-black p-2 text-center w-1/3">
                         <Button
-                          onClick={() => alert('Funcionalidad de Añadir alumno pendiente de implementar')}
+                          onClick={handleOpenAddStudentModal}
                           className="bg-[#D9D9D9] border-2 border-black rounded-[5px] px-3 py-1 flex items-center justify-center gap-2 text-black text-xs font-bold mx-auto shadow-[2px_2px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_rgba(0,0,0,1)]"
                           unstyled={true}
                         >
@@ -726,6 +828,79 @@ export default function GroupForm({
           </div>
         </div>
       </div>
+
+      {/* Modal para añadir alumno manualmente */}
+      {showAddStudentModal && (
+        <Modal
+          isOpen={showAddStudentModal}
+          onClose={handleCloseAddStudentModal}
+          title="Agregar Alumno"
+        >
+          <div className="space-y-5">
+            {/* Mensaje de error */}
+            {addStudentError && (
+              <div className="bg-red-100 border-3 border-red-500 rounded-[10px] text-red-700 px-4 py-3 shadow-[4px_4px_0px_rgba(0,0,0,1)] relative">
+                <span className="block font-medium">{addStudentError}</span>
+                <button
+                  onClick={() => setAddStudentError('')}
+                  className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center text-red-700 hover:text-red-900 font-bold text-xl border-2 border-red-500 rounded-full hover:bg-red-200 transition-colors"
+                  aria-label="Cerrar error"
+                >
+                  ×
+                </button>
+              </div>
+            )}
+
+            {/* Campo Nombre */}
+            <div>
+              <label className="block text-base font-bold text-black mb-2">
+                Nombre del Alumno *
+              </label>
+              <Input
+                type="text"
+                value={addStudentForm.nombre}
+                onChange={(e) => setAddStudentForm(prev => ({ ...prev, nombre: e.target.value }))}
+                placeholder="Ingrese el nombre completo"
+                className="w-full px-4 py-3 border-2 border-black rounded-[10px] focus:outline-none focus:ring-2 focus:ring-[#88c999] text-base"
+                unstyled={true}
+              />
+            </div>
+
+            {/* Campo Boleta */}
+            <div>
+              <label className="block text-base font-bold text-black mb-2">
+                Boleta *
+              </label>
+              <Input
+                type="text"
+                value={addStudentForm.boleta}
+                onChange={(e) => setAddStudentForm(prev => ({ ...prev, boleta: e.target.value }))}
+                placeholder="Ingrese la boleta (mínimo 8 dígitos)"
+                className="w-full px-4 py-3 border-2 border-black rounded-[10px] focus:outline-none focus:ring-2 focus:ring-[#88c999] text-base"
+                unstyled={true}
+              />
+            </div>
+
+            {/* Botones de acción */}
+            <div className="flex justify-end gap-3 mt-6">
+              <Button
+                onClick={handleCloseAddStudentModal}
+                className="bg-[#D9D9D9] text-black border-2 border-black rounded-[10px] px-6 py-3 font-bold text-base shadow-[4px_4px_0px_rgba(0,0,0,1)] hover:bg-gray-300 active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0px_rgba(0,0,0,1)] transition-all"
+                unstyled={true}
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleAddStudentManually}
+                className="bg-[#88c999] text-black border-2 border-black rounded-[10px] px-6 py-3 font-bold text-base shadow-[4px_4px_0px_rgba(0,0,0,1)] hover:bg-[#76b587] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0px_rgba(0,0,0,1)] transition-all"
+                unstyled={true}
+              >
+                Agregar
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }

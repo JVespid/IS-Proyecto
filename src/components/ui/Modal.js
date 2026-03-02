@@ -50,13 +50,13 @@ export default function Modal({
     );
   }
 
-  // Estilos predeterminados
-  const overlayStyles = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
-  const modalStyles = 'bg-white rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto';
-  const headerStyles = 'px-6 py-4 border-b border-gray-200';
-  const titleStyles = 'text-xl font-semibold text-gray-800';
-  const bodyStyles = 'px-6 py-4';
-  const footerStyles = 'px-6 py-4 border-t border-gray-200 flex justify-end gap-3';
+  // Estilos predeterminados con diseño neobrutalist
+  const overlayStyles = 'fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4';
+  const modalStyles = 'bg-white rounded-[15px] border-4 border-black shadow-[8px_8px_0px_rgba(0,0,0,1)] max-w-lg w-full max-h-[90vh] overflow-y-auto';
+  const headerStyles = 'px-6 py-4 border-b-4 border-black bg-[#CCFED9]';
+  const titleStyles = 'text-2xl font-bold text-black';
+  const bodyStyles = 'px-6 py-6';
+  const footerStyles = 'px-6 py-4 border-t-4 border-black bg-gray-50 flex justify-end gap-3';
 
   return (
     <div className={overlayStyles} onClick={onClose}>
