@@ -98,6 +98,7 @@ export default function GroupForm({
             studentId: att.Students?.id,
             boleta: att.Students?.reportCard || 'N/A',
             nombre: att.Students?.fullName || 'Sin nombre',
+            numeroLista: index + 1, // Asignar número de lista secuencial
             tempId: index,
           }));
           
@@ -324,10 +325,14 @@ export default function GroupForm({
         console.log('Eliminando estudiante temporal con tempId:', student.tempId);
       }
       
-      // Actualizar lista local (eliminar por id o tempId)
-      setStudents((prev) => prev.filter((s) => 
-        s.id !== studentIdentifier && s.tempId !== studentIdentifier
-      ));
+      // Actualizar lista local y reordenar alfabéticamente
+      setStudents((prev) => {
+        const filtered = prev.filter((s) => 
+          s.id !== studentIdentifier && s.tempId !== studentIdentifier
+        );
+        // Reordenar alfabéticamente y reasignar números
+        return reorderStudents(filtered);
+      });
     } catch (err) {
       console.error('Error al eliminar estudiante:', err);
       setError(`Error al eliminar el estudiante: ${err.message}`);
@@ -530,9 +535,9 @@ export default function GroupForm({
         throw new Error('No se encontraron estudiantes válidos en el archivo');
       }
 
-      // Agregar estudiantes y reordenar alfabéticamente
-      const nuevaLista = reorderStudents([...students, ...nuevosEstudiantes]);
-      setStudents(nuevaLista);
+      // Agregar estudiantes manteniendo el orden del Excel
+      // NO reordenamos alfabéticamente hasta que se agregue/elimine manualmente
+      setStudents([...students, ...nuevosEstudiantes]);
       
       console.log(`✓ ${nuevosEstudiantes.length} estudiantes agregados desde archivo`);
       alert(`✓ Se agregaron ${nuevosEstudiantes.length} estudiantes correctamente`);
