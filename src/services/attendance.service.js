@@ -17,6 +17,7 @@ const SCHEMA = 'bdLista';
  * @param {object} studentData - Datos del estudiante extraídos
  * @param {string} numberOfList - Número de lista del estudiante (opcional)
  * @param {SupabaseClient} client - Cliente de Supabase (opcional)
+ * @param {Array} initialAttendanceData - Datos iniciales de asistencia (opcional, para sincronizar con otros estudiantes)
  * @returns {Promise<object>} Asistencia registrada
  */
 export const recordAttendance = async (
@@ -24,20 +25,22 @@ export const recordAttendance = async (
   currentGroupId,
   studentData,
   numberOfList = null,
-  client
+  client,
+  initialAttendanceData = []
 ) => {
   if (!client) {
     throw new Error('Supabase client is required');
   }
   try {
-    // takeAttendanceStudentData siempre inicia como array vacío
+    // takeAttendanceStudentData normalmente inicia como array vacío
     // Los datos se agregarán cuando el estudiante escanee el QR
+    // PERO si se proporciona initialAttendanceData, se usa ese (para sincronizar alumnos nuevos con registros existentes)
 
     // Validar datos con Zod
     const validatedData = attendanceSchema.parse({
       studentId,
       currentGroupId,
-      takeAttendanceStudentData: [], // Array vacío por defecto
+      takeAttendanceStudentData: initialAttendanceData, // Array proporcionado o vacío
       numberOfList,
     });
 

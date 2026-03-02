@@ -277,12 +277,56 @@ export default function GroupForm({
   };
 
   /**
+   * FUNCIÓN HELPER: Crear registros de ausencia basados en registros existentes
+   * Copia la estructura de fechas pero marca todo como ausente
+   */
+  const createAbsenceRecords = (existingRecords) => {
+    if (!Array.isArray(existingRecords) || existingRecords.length === 0) {
+      return [];
+    }
+    
+    return existingRecords.map(record => ({
+      attended: false,
+      absent: true,
+      delayed: false,
+      date: record.date || null
+    }));
+  };
+
+  /**
    * FUNCIÓN LISTA PARA USAR: Agregar estudiantes al grupo
    * Inscribe múltiples estudiantes en TakeAttendance
    */
   const handleAddStudentsToGroup = async (currentGroupId, studentsArray) => {
     try {
       const supabase = createClient();
+      
+      // Obtener registros existentes del grupo para sincronizar nuevos alumnos
+      let absenceRecords = [];
+      
+      if (mode === 'edit') {
+        try {
+          const existingAttendances = await getBySession(currentGroupId, supabase);
+          
+          if (existingAttendances && existingAttendances.length > 0) {
+            // Buscar el PRIMER estudiante que tenga datos de asistencia NO vacíos
+            const studentWithData = existingAttendances.find(attendance => 
+              Array.isArray(attendance.takeAttendanceStudentData) && 
+              attendance.takeAttendanceStudentData.length > 0
+            );
+            
+            if (studentWithData) {
+              const existingData = studentWithData.takeAttendanceStudentData;
+              absenceRecords = createAbsenceRecords(existingData);
+              console.log(`✓ Se crearán ${absenceRecords.length} registros de ausencia (copiados de ${studentWithData.Students?.fullName || 'estudiante'})`);
+            } else {
+              console.log('ℹ No hay estudiantes con registros de asistencia para sincronizar');
+            }
+          }
+        } catch (err) {
+          console.warn('No se pudieron obtener registros existentes, continuando con array vacío:', err);
+        }
+      }
       
       for (const student of studentsArray) {
         // Crear o obtener estudiante
@@ -292,7 +336,7 @@ export default function GroupForm({
           supabase
         );
         
-        // Crear inscripción en TakeAttendance con número de lista
+        // Crear inscripción en TakeAttendance con número de lista y registros de asistencia sincronizados
         const attendance = await recordAttendance(
           studentRecord.id,
           currentGroupId,
@@ -301,7 +345,8 @@ export default function GroupForm({
             fullName: student.nombre,
           },
           student.numeroLista ? String(student.numeroLista) : null, // Convertir a string
-          supabase
+          supabase,
+          absenceRecords // Pasar registros de ausencia si existen
         );
         
         // Actualizar lista local con ID de TakeAttendance
@@ -621,6 +666,13 @@ export default function GroupForm({
     );
   }
 
+  // Ordenar estudiantes alfabéticamente para mostrar en la tabla
+  const sortedStudents = [...students].sort((a, b) => {
+    const nameA = (a.nombre || '').toLowerCase();
+    const nameB = (b.nombre || '').toLowerCase();
+    return nameA.localeCompare(nameB, 'es');
+  });
+
   return (
     <div className="min-h-screen bg-[#CCFED9] p-8 flex items-center justify-center overflow-hidden">
       <div className="w-full max-w-6xl h-[85vh] bg-[#EEFEF1] border-2 border-black rounded-[30px] shadow-[8px_8px_0px_rgba(0,0,0,1)] relative flex flex-col pt-20 px-12 pb-12">
@@ -823,14 +875,14 @@ export default function GroupForm({
                     </tr>
                   </thead>
                   <tbody>
-                    {students.length === 0 ? (
+                    {sortedStudents.length === 0 ? (
                       <tr>
                         <td colSpan="3" className="text-center py-12 text-gray-500 border-b-2 border-black">
                           No hay estudiantes inscritos
                         </td>
                       </tr>
                     ) : (
-                      students.map((student) => (
+                      sortedStudents.map((student) => (
                         <tr key={student.id || student.tempId}>
                           <td className="border-b-2 border-r-2 border-black p-4 text-center text-gray-500 font-medium text-lg">
                             {student.boleta}
