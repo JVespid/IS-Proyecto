@@ -134,7 +134,8 @@ function QRPageContent() {
             )}
           </div>
 
-          {/* Botón Establecer tiempo */}
+          {/* Botón Establecer tiempo 
+          
           <div className="flex justify-center mb-4">
             <Button
               onClick={() => {
@@ -159,25 +160,28 @@ function QRPageContent() {
               Establecer tiempo
             </Button>
           </div>
+                */}
 
-          {/* Tiempo de vida */}
+          {/* Tiempo de vida 
           <div className="mb-8">
             <p className="text-center text-black text-lg">
               Tiempo de vida: {lifeTime} segundos (actualiza cada {lifeTime} segundos) | Tiempo activo: {activeTime} minutos
             </p>
           </div>
+              */}
 
           {/* Línea separadora */}
           <div className="w-full max-w-2xl border-t border-[#84c7c6] mb-8"></div>
 
           {/* Botón Generar nuevo QR */}
           <div className="flex justify-center relative w-72 h-10">
-            {/* Bloques grises a los lados */}
+            {/* Bloques grises a los lados 
             <div className="absolute inset-0 flex justify-between items-center px-0">
               <div className="w-6 h-8 bg-[#cccccc]"></div>
               <div className="w-6 h-8 bg-[#cccccc]"></div>
             </div>
-            {/* Botón principal */}
+              */}
+            {/* Botón principal 
             <Button
               disabled
               className="relative z-10 bg-gradient-to-b from-white to-[#e6e6ff] text-black px-8 py-1 text-lg font-normal shadow-sm w-64"
@@ -185,6 +189,7 @@ function QRPageContent() {
             >
               Generar <strong>nuevo QR</strong>
             </Button>
+            */}
           </div>
 
         </div>
