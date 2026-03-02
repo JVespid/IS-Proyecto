@@ -259,3 +259,37 @@ export const remove = async (attendanceId, client) => {
     throw error;
   }
 };
+
+/**
+ * Actualiza el número de lista de un estudiante en TakeAttendance
+ * @param {string} attendanceId - ID del registro de asistencia
+ * @param {string|number} numberOfList - Nuevo número de lista
+ * @param {SupabaseClient} client - Cliente de Supabase
+ * @returns {Promise<object>} Registro actualizado
+ */
+export const updateNumberOfList = async (attendanceId, numberOfList, client) => {
+  if (!client) {
+    throw new Error('Supabase client is required');
+  }
+  try {
+    log(MODULE_NAME, 'Actualizando número de lista', { attendanceId, numberOfList });
+
+    const { data, error } = await client
+      .schema(SCHEMA)
+      .from(TABLE_NAME)
+      .update({ numberOfList: numberOfList ? String(numberOfList) : null })
+      .eq('id', attendanceId)
+      .select()
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    log(MODULE_NAME, 'Número de lista actualizado exitosamente', { attendanceId, numberOfList });
+    return data;
+  } catch (error) {
+    logError(MODULE_NAME, 'Error al actualizar número de lista', error);
+    throw error;
+  }
+};

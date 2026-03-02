@@ -19,7 +19,7 @@ import { getAll as getAllSubjects, getOrCreate as getOrCreateSubject } from '@/s
 import { getAll as getAllGroups, getOrCreate as getOrCreateGroup } from '@/services/group.service';
 import { createSession, update as updateSession } from '@/services/session.service';
 import { getOrCreateStudent } from '@/services/student.service';
-import { recordAttendance, remove as removeAttendance, getBySession } from '@/services/attendance.service';
+import { recordAttendance, remove as removeAttendance, getBySession, updateNumberOfList } from '@/services/attendance.service';
 
 export default function GroupForm({ 
   mode = 'create', 
@@ -240,6 +240,25 @@ export default function GroupForm({
         console.log(`Guardando ${newStudents.length} estudiantes nuevos en la BD...`);
         await handleAddStudentsToGroup(groupId, newStudents);
         console.log(`✓ ${newStudents.length} estudiantes agregados exitosamente`);
+      }
+
+      // Actualizar números de lista de estudiantes existentes en la BD
+      const existingStudents = students.filter(s => s.id);
+      
+      if (existingStudents.length > 0) {
+        console.log(`Actualizando números de lista de ${existingStudents.length} estudiantes existentes...`);
+        const supabase = createClient();
+        
+        for (const student of existingStudents) {
+          try {
+            await updateNumberOfList(student.id, student.numeroLista, supabase);
+          } catch (err) {
+            console.error(`Error al actualizar número de lista del estudiante ${student.nombre}:`, err);
+            // Continuar con los demás aunque uno falle
+          }
+        }
+        
+        console.log(`✓ Números de lista actualizados exitosamente`);
       }
 
       // Callback de éxito
