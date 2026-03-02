@@ -11,6 +11,7 @@ import QRScanner from '@/components/qr/QRScanner';
 import Spinner from '@/components/ui/Spinner';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
+import Modal from '@/components/ui/Modal';
 import { log, logError } from '@/constants/config';
 
 const MODULE_NAME = 'scan.page';
@@ -24,6 +25,8 @@ function ScanPageContent() {
   const [manualBoleta, setManualBoleta] = useState('');
   const [error, setError] = useState('');
   const [webDown, setWebDown] = useState(false);
+  const [scrapedBoleta, setScrapedBoleta] = useState(''); // Boleta obtenida del scraping
+  const [showBoletaModal, setShowBoletaModal] = useState(false); // Modal para confirmar boleta
 
   const sessionId = useMemo(() => {
     const id = searchParams.get('sessionId');
@@ -112,40 +115,82 @@ function ScanPageContent() {
         if (isWebDownError(errorMsg)) {
           setWebDown(true);
           setShowManualInput(true);
+          setManualBoleta('');
           setError('La página web no está disponible. Puedes ingresar tu número de boleta manualmente.');
           setIsProcessing(false);
           return;
         }
         
-        // Otros errores (404, boleta no encontrada, etc.)
-        throw new Error(errorMsg);
+        // Otros errores de scraping - mostrar modal para ingreso manual
+        setShowManualInput(true);
+        setManualBoleta('');
+        setError(`No se pudo obtener la boleta automáticamente: ${errorMsg}. Ingrésala manualmente.`);
+        setIsProcessing(false);
+        return;
       }
 
       const { reportCard } = scrapingData.data;
 
       if (!reportCard) {
-        throw new Error('No se pudo extraer el número de boleta');
+        setShowManualInput(true);
+        setManualBoleta('');
+        setError('No se pudo extraer el número de boleta. Por favor ingrésala manualmente.');
+        setIsProcessing(false);
+        return;
       }
 
       log(MODULE_NAME, 'Boleta extraída exitosamente', { reportCard });
+      
+      // Guardar boleta extraída y mostrar modal de confirmación
+      setScrapedBoleta(reportCard);
+      setManualBoleta(reportCard); // Pre-llenar el input
+      setShowBoletaModal(true);
+      setIsProcessing(false);
 
+    } catch (error) {
+      logError(MODULE_NAME, 'Error al procesar credencial', error);
+      setError(error.message);
+      setShowManualInput(true);
+      setManualBoleta('');
+      setIsProcessing(false);
+    }
+  }, [isProcessing]);
+
+  /**
+   * Confirma y marca la asistencia con la boleta escaneada
+   */
+  const handleConfirmBoleta = useCallback(async () => {
+    setIsProcessing(true);
+    setError('');
+
+    try {
       // Marcar asistencia
-      const attendanceData = await markAttendanceInDB(reportCard, 'scan');
+      const attendanceData = await markAttendanceInDB(scrapedBoleta, 'scan');
 
       // Redirigir a pantalla de éxito
       const studentName = attendanceData.data?.student?.name || 'Estudiante';
       router.push(`/asistencia/result?success=true&student=${encodeURIComponent(studentName)}`);
 
     } catch (error) {
-      logError(MODULE_NAME, 'Error al procesar credencial', error);
-      setError(error.message);
+      logError(MODULE_NAME, 'Error al marcar asistencia', error);
       
-      // Mostrar error en pantalla de resultado
-      router.push(`/asistencia/result?success=false&error=${encodeURIComponent(error.message)}`);
-    } finally {
+      // Si falla al marcar, mostrar modal manual con la boleta obtenida
+      setShowBoletaModal(false);
+      setShowManualInput(true);
+      setManualBoleta(scrapedBoleta); // Mantener la boleta obtenida
+      setError(`Error al registrar asistencia: ${error.message}. Verifica tu boleta o ingrésala manualmente.`);
       setIsProcessing(false);
     }
-  }, [isProcessing, router, markAttendanceInDB]);
+  }, [scrapedBoleta, router, markAttendanceInDB]);
+
+  /**
+   * Editar manualmente la boleta escaneada
+   */
+  const handleEditBoleta = useCallback(() => {
+    setShowBoletaModal(false);
+    setShowManualInput(true);
+    setManualBoleta(scrapedBoleta); // Pre-llenar con la boleta escaneada
+  }, [scrapedBoleta]);
 
   /**
    * Maneja el ingreso manual de boleta
@@ -172,10 +217,6 @@ function ScanPageContent() {
     } catch (error) {
       logError(MODULE_NAME, 'Error al procesar boleta manual', error);
       setError(error.message);
-      
-      // Mostrar error en pantalla de resultado
-      router.push(`/asistencia/result?success=false&error=${encodeURIComponent(error.message)}`);
-    } finally {
       setIsProcessing(false);
     }
   }, [manualBoleta, router, markAttendanceInDB]);
@@ -231,7 +272,7 @@ function ScanPageContent() {
                 type="text"
                 value={manualBoleta}
                 onChange={(e) => setManualBoleta(e.target.value)}
-                placeholder="Ej: 2020123456"
+                placeholder={manualBoleta ? "Ej: 2020123456" : "Error al obtener boleta - ingrésala manualmente"}
                 className="w-full text-lg"
                 disabled={isProcessing}
               />
@@ -284,6 +325,43 @@ function ScanPageContent() {
           ¿Problemas con el escáner? Ingresa tu boleta manualmente
         </button>
       )}
+
+      {/* Modal de confirmación de boleta escaneada */}
+      <Modal
+        isOpen={showBoletaModal}
+        onClose={() => !isProcessing && setShowBoletaModal(false)}
+        title="Confirmar Número de Boleta"
+        footer={
+          <>
+            <Button
+              onClick={handleEditBoleta}
+              className="bg-gray-300 hover:bg-gray-400 text-black"
+              disabled={isProcessing}
+            >
+              Editar
+            </Button>
+            <Button
+              onClick={handleConfirmBoleta}
+              className="bg-[#449e63] hover:bg-[#5aba9f] text-white"
+              disabled={isProcessing}
+            >
+              {isProcessing ? 'Procesando...' : 'Confirmar'}
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <p className="text-lg text-gray-700">
+            Se detectó el siguiente número de boleta de tu credencial:
+          </p>
+          <div className="bg-[#CCFED9] border-4 border-black rounded-lg p-4 text-center">
+            <p className="text-3xl font-bold text-black">{scrapedBoleta}</p>
+          </div>
+          <p className="text-sm text-gray-600">
+            ¿Es correcto este número? Si no, puedes editarlo manualmente.
+          </p>
+        </div>
+      </Modal>
     </div>
   );
 }
