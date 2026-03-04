@@ -123,6 +123,28 @@ export default function GroupForm({
   };
 
   /**
+   * Manejar cambio en campo de Grupo con validación y filtrado
+   */
+  const handleGroupChange = (value) => {
+    // Si está vacío, permitir
+    if (!value) {
+      handleChange('groupId', '');
+      return;
+    }
+    
+    // Filtrar solo caracteres alfanuméricos y máximo 5 caracteres
+    const filtered = value.replace(/[^a-zA-Z0-9]/g, '').substring(0, 5);
+    
+    // Si se intentó ingresar algo inválido, mostrar mensaje
+    if (filtered !== value) {
+      alert('El grupo debe contener únicamente caracteres alfanuméricos (letras y números) y un máximo de 5 caracteres.');
+    }
+    
+    // Actualizar con el valor filtrado
+    handleChange('groupId', filtered);
+  };
+
+  /**
    * Helper: Verificar si un valor es UUID o texto libre
    * Y obtener/crear el registro de Subject correspondiente
    */
@@ -177,6 +199,13 @@ export default function GroupForm({
       // Validar campos requeridos
       if (!formData.subjectId || !formData.groupId) {
         throw new Error('Materia y Grupo son obligatorios');
+      }
+
+      // Validar formato de grupo: exactamente 5 caracteres alfanuméricos
+      const groupRegex = /^[a-zA-Z0-9]{5}$/;
+      if (!groupRegex.test(formData.groupId)) {
+        alert('El grupo debe tener exactamente 5 caracteres alfanuméricos (letras y números).');
+        throw new Error('Formato de grupo inválido');
       }
 
       // Resolver subjectId y groupId (crear si es necesario)
@@ -730,10 +759,11 @@ export default function GroupForm({
                 <Autocomplete
                   options={groups}
                   value={formData.groupId}
-                  onChange={(value) => handleChange('groupId', value)}
+                  onChange={handleGroupChange}
                   disabled={mode === 'edit'}
                   className={`w-full px-4 py-2 border-2 border-black border-r-0 rounded-l-[10px] focus:outline-none ${mode === 'edit' ? 'bg-gray-100 cursor-not-allowed' : 'bg-white'}`}
                   unstyled={true}
+                  maxLength={5}
                 />
                 <div className="bg-[#D9D9D9] border-2 border-black rounded-r-[10px] w-12 flex items-center justify-center">
                   <svg width="16" height="10" viewBox="0 0 16 10" fill="none" xmlns="http://www.w3.org/2000/svg">
