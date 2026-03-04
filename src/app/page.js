@@ -125,7 +125,7 @@ export default function Home() {
           className="bg-[#8B80F9] text-white px-12 py-3 text-xl font-medium rounded-full hover:bg-[#7a6ee6] transition-colors shadow-lg"
           unstyled={true}
         >
-          Administrador de unidades de aprendizaje
+          Clases
         </Button>
       </div>
 

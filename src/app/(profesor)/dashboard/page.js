@@ -213,7 +213,7 @@ export default function DashboardPage() {
               +
             </span>
           </div>
-          Crear grupo
+          Crear nueva Clase
         </Button>
       ),
       render: "",
