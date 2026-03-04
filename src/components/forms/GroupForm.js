@@ -92,7 +92,7 @@ export default function GroupForm({
         setSubjects(
           subjectsData.map((s) => ({ value: s.id, label: s.Subject })),
         );
-        setGroups(groupsData.map((g) => ({ value: g.id, label: g.group })));
+        setGroups(groupsData.map((g) => ({ value: g.group, label: g.group })));
 
         // Si es modo edición, pre-llenar datos
         if (mode === "edit" && initialData) {

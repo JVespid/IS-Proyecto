@@ -45,7 +45,7 @@ CREATE TABLE bdLista.Students (
         time zone NOT NULL DEFAULT now(),
         fullName text,
         reportCard text,
-        id uuid NOT NULL,
+        id uuid NOT NULL DEFAULT gen_random_uuid (),
         CONSTRAINT Students_pkey PRIMARY KEY (id)
 );
 
@@ -59,14 +59,13 @@ CREATE TABLE bdLista.Subject (
 );
 
 CREATE TABLE bdLista.TakeAttendance (
-    id uuid NOT NULL DEFAULT gen_random_uuid (),
-    created_at timestamp
-    with
-        time zone NOT NULL DEFAULT now(),
-        studentId uuid,
-        currentGroupId uuid,
-        takeAttendanceStudentData json,
-        numberOfList text,
-        CONSTRAINT TakeAttendance_studentId_fkey FOREIGN KEY (studentId) REFERENCES bdLista.Students (id),
-        CONSTRAINT TakeAttendance_currentGroupId_fkey FOREIGN KEY (currentGroupId) REFERENCES bdLista.CurrentGroup (id)
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  studentId uuid,
+  currentGroupId uuid,
+  takeAttendanceStudentData json DEFAULT '[]'::json,
+  numberOfList text,
+  CONSTRAINT TakeAttendance_pkey PRIMARY KEY (id),
+  CONSTRAINT TakeAttendance_studentId_fkey FOREIGN KEY (studentId) REFERENCES bdLista.Students(id),
+  CONSTRAINT TakeAttendance_currentGroupId_fkey FOREIGN KEY (currentGroupId) REFERENCES bdLista.CurrentGroup(id)
 );
