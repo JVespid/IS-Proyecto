@@ -92,12 +92,17 @@ export default function GroupForm({
         setSubjects(
           subjectsData.map((s) => ({ value: s.id, label: s.Subject })),
         );
+        // Para Group usamos el texto legible tanto en value como en label
         setGroups(groupsData.map((g) => ({ value: g.group, label: g.group })));
 
         // Si es modo edición, pre-llenar datos
         if (mode === "edit" && initialData) {
+          // Convertir groupId (UUID) al texto legible del grupo
+          const groupRecord = groupsData.find((g) => g.id === initialData.groupId);
+          const groupName = groupRecord ? groupRecord.group : "";
+
           setFormData({
-            groupId: initialData.groupId || "",
+            groupId: groupName, // Usar texto del grupo para que sea legible
             subjectId: initialData.subjectId || "",
             degree: initialData.degree || "",
             curriculum: initialData.curriculum || "",
@@ -140,6 +145,7 @@ export default function GroupForm({
 
   /**
    * Manejar cambio en campo de Grupo con validación y filtrado
+   * Solo valida texto legible (Group.group), no UUIDs
    */
   const handleGroupChange = (value) => {
     // Si está vacío, permitir
@@ -158,7 +164,7 @@ export default function GroupForm({
       );
     }
 
-    // Actualizar con el valor filtrado
+    // Actualizar con el valor filtrado (siempre texto del grupo)
     handleChange("groupId", filtered);
   };
 
